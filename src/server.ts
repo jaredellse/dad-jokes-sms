@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import twilio from 'twilio';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -117,6 +117,32 @@ async function saveConsent(consent: any): Promise<void> {
   await fs.writeFile('consents.json', JSON.stringify(consents, null, 2));
 }
 
+// Function to read unsubscribed numbers
+async function readUnsubscribed(): Promise<string[]> {
+  try {
+    const data = await fs.readFile('unsubscribed.json', 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    // If file doesn't exist, return empty array
+    return [];
+  }
+}
+
+// Function to save unsubscribed number
+async function saveUnsubscribed(phoneNumber: string): Promise<void> {
+  const unsubscribed = await readUnsubscribed();
+  if (!unsubscribed.includes(phoneNumber)) {
+    unsubscribed.push(phoneNumber);
+    await fs.writeFile('unsubscribed.json', JSON.stringify(unsubscribed, null, 2));
+  }
+}
+
+// Function to check if number is unsubscribed
+async function isUnsubscribed(phoneNumber: string): Promise<boolean> {
+  const unsubscribed = await readUnsubscribed();
+  return unsubscribed.includes(phoneNumber);
+}
+
 app.post('/api/send-sms', async (req, res) => {
   try {
     const { to, message, isQuestion } = req.body;
@@ -126,8 +152,20 @@ app.post('/api/send-sms', async (req, res) => {
     // Convert single number to array if needed
     const recipients = Array.isArray(to) ? to : [to];
     
-    // Save consent for each recipient
+    // Filter out unsubscribed numbers
+    const subscribedRecipients = [];
     for (const recipient of recipients) {
+      if (!(await isUnsubscribed(recipient))) {
+        subscribedRecipients.push(recipient);
+      }
+    }
+
+    if (subscribedRecipients.length === 0) {
+      return res.json({ success: false, error: 'All recipients have unsubscribed' });
+    }
+    
+    // Save consent for each recipient
+    for (const recipient of subscribedRecipients) {
       await saveConsent({
         phoneNumber: recipient,
         consentText: "I consent to receive dad jokes via SMS at the phone number provided",
@@ -137,14 +175,19 @@ app.post('/api/send-sms', async (req, res) => {
       });
     }
 
-    console.log('Attempting to send SMS to:', recipients);
+    console.log('Attempting to send SMS to:', subscribedRecipients);
     
+    // Add unsubscribe message for punchlines
+    const finalMessage = !isQuestion 
+      ? message + "\n\nTo stop receiving dad jokes, reply with STOP"
+      : message;
+
     // Send message to all recipients as a group
     const result = await client.messages.create({
-      body: message,
-      to: recipients.join(','),  // Join recipients with commas for Twilio's group messaging
+      body: finalMessage,
+      to: subscribedRecipients.join(','),
       from: process.env.TWILIO_PHONE_NUMBER,
-      messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID // Optional: Use a messaging service for better group handling
+      messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID
     });
 
     console.log('SMS sent successfully:', result.sid);
@@ -156,6 +199,43 @@ app.post('/api/send-sms', async (req, res) => {
       error: error instanceof Error ? error.message : 'Failed to send SMS',
       details: error
     });
+  }
+});
+
+// Handle incoming SMS (for unsubscribe)
+app.post('/api/sms-webhook', express.urlencoded({ extended: false }), async (req: Request, res: Response) => {
+  const { Body, From } = req.body;
+  
+  if (Body?.trim().toUpperCase() === 'STOP') {
+    await saveUnsubscribed(From);
+    
+    // Send confirmation
+    await client.messages.create({
+      body: "You've been unsubscribed from dad jokes. We're sorry to see you go. Text START to resubscribe",
+      to: From,
+      from: process.env.TWILIO_PHONE_NUMBER
+    });
+    
+    res.type('text/xml');
+    res.send('<Response></Response>');
+  } else if (Body?.trim().toUpperCase() === 'START') {
+    // Remove from unsubscribed list
+    const unsubscribed = await readUnsubscribed();
+    const filtered = unsubscribed.filter(num => num !== From);
+    await fs.writeFile('unsubscribed.json', JSON.stringify(filtered, null, 2));
+    
+    // Send confirmation
+    await client.messages.create({
+      body: "Welcome back to dad jokes! You're now resubscribed",
+      to: From,
+      from: process.env.TWILIO_PHONE_NUMBER
+    });
+    
+    res.type('text/xml');
+    res.send('<Response></Response>');
+  } else {
+    res.type('text/xml');
+    res.send('<Response></Response>');
   }
 });
 
