@@ -1,10 +1,12 @@
 import express, { Request, Response } from 'express';
-import twilio from 'twilio';
+import twilio, { Twilio } from 'twilio';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import fs from 'fs/promises';
 
 dotenv.config();
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Debug logging for environment variables
 console.log('Checking Twilio configuration...');
@@ -12,26 +14,50 @@ console.log('TWILIO_ACCOUNT_SID:', process.env.TWILIO_ACCOUNT_SID ? 'Present' : 
 console.log('TWILIO_AUTH_TOKEN:', process.env.TWILIO_AUTH_TOKEN ? 'Present' : 'Missing');
 console.log('TWILIO_PHONE_NUMBER:', process.env.TWILIO_PHONE_NUMBER ? 'Present' : 'Missing');
 console.log('TWILIO_MESSAGING_SERVICE_SID:', process.env.TWILIO_MESSAGING_SERVICE_SID ? 'Present' : 'Missing');
+console.log('Development mode:', isDevelopment ? 'Yes' : 'No');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
+interface MockTwilioClient {
+  messages: {
+    create: (params: any) => Promise<{ sid: string }>;
+  }
+}
+
+// Mock Twilio client for development
+const mockTwilioClient: MockTwilioClient = {
+  messages: {
+    create: async (params: any) => {
+      console.log('\n📱 MOCK SMS SENT:');
+      console.log('To:', params.to);
+      console.log('From:', params.from);
+      console.log('Message:', params.body);
+      console.log('-------------------\n');
+      return { sid: 'MOCK_' + Date.now() };
+    }
+  }
+};
+
+const client: Twilio | MockTwilioClient = isDevelopment ? mockTwilioClient : twilio(
+  process.env.TWILIO_ACCOUNT_SID!,
+  process.env.TWILIO_AUTH_TOKEN!
 );
 
-// Test Twilio client configuration
-try {
-  console.log('Testing Twilio client configuration...');
-  client.messages.list({ limit: 1 }).then(() => {
-    console.log('Twilio client configuration successful!');
-  }).catch(error => {
-    console.error('Twilio client configuration error:', error.message);
-  });
-} catch (error) {
-  console.error('Error creating Twilio client:', error);
+// Test configuration
+if (!isDevelopment) {
+  const twilioClient = client as Twilio;
+  try {
+    console.log('Testing Twilio client configuration...');
+    twilioClient.messages.list({ limit: 1 }).then(() => {
+      console.log('Twilio client configuration successful!');
+    }).catch((error: Error) => {
+      console.error('Twilio client configuration error:', error.message);
+    });
+  } catch (error) {
+    console.error('Error creating Twilio client:', error);
+  }
 }
 
 // Create a simple HTML page to display opt-in records
