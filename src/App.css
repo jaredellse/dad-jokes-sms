@@ -1,0 +1,134 @@
+.app {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  font-family: 'Georgia', serif;
+}
+
+h1 {
+  color: #2c3e50;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  font-weight: normal;
+}
+
+.joke-container {
+  background: #f8f9fa;
+  padding: 2.5rem;
+  border-radius: 12px;
+  margin: 2rem 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.joke-question {
+  font-size: 1.4rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  font-style: italic;
+}
+
+.joke-punchline {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  color: #34495e;
+  padding-left: 1rem;
+  border-left: 3px solid #646cff;
+}
+
+button {
+  background: #646cff;
+  color: white;
+  border: none;
+  padding: 0.8em 1.6em;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1em;
+  transition: all 0.3s ease;
+  font-family: 'Georgia', serif;
+}
+
+button:hover {
+  background: #535bf2;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+button:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.sms-sender {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.input-help {
+  display: block;
+  margin-top: 0.5rem;
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.consent-group {
+  margin: 1.5rem 0;
+  text-align: left;
+  padding: 0 1rem;
+}
+
+.consent-label {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.95rem;
+  color: #4a5568;
+  line-height: 1.4;
+}
+
+.consent-label input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 4px;
+}
+
+.sms-sender input[type="text"] {
+  padding: 0.8em 1.2em;
+  font-size: 1em;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  width: 100%;
+  max-width: 400px;
+  transition: border-color 0.3s ease;
+  font-family: 'Georgia', serif;
+}
+
+.sms-sender input[type="text"]:focus {
+  outline: none;
+  border-color: #646cff;
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.1);
+}
+
+.success {
+  color: #38a169;
+  margin-top: 1rem;
+  font-style: italic;
+}
+
+.error {
+  color: #e53e3e;
+  margin-top: 1rem;
+  font-style: italic;
+}

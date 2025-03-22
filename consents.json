@@ -1,0 +1,60 @@
+[
+  {
+    "phoneNumber": "7815215833",
+    "consentText": "I consent to receive dad jokes via SMS at the phone number provided",
+    "timestamp": "2025-03-21T20:26:07.954Z",
+    "ipAddress": "::1"
+  },
+  {
+    "phoneNumber": "7815215833",
+    "consentText": "I consent to receive dad jokes via SMS at the phone number provided",
+    "timestamp": "2025-03-21T20:52:33.297Z",
+    "ipAddress": "::1"
+  },
+  {
+    "phoneNumber": "7815215833",
+    "consentText": "I consent to receive dad jokes via SMS at the phone number provided",
+    "timestamp": "2025-03-21T20:52:36.782Z",
+    "ipAddress": "::1"
+  },
+  {
+    "phoneNumber": "7815215833",
+    "consentText": "I consent to receive dad jokes via SMS at the phone number provided",
+    "timestamp": "2025-03-21T20:54:23.593Z",
+    "ipAddress": "::1"
+  },
+  {
+    "phoneNumber": "7815215833",
+    "consentText": "I consent to receive dad jokes via SMS at the phone number provided",
+    "timestamp": "2025-03-21T20:54:26.891Z",
+    "ipAddress": "::1"
+  },
+  {
+    "phoneNumber": "+17815215833",
+    "consentText": "I consent to receive dad jokes via SMS at the phone number provided",
+    "timestamp": "2025-03-21T20:57:08.047Z",
+    "ipAddress": "::1"
+  },
+  {
+    "phoneNumber": "+17815215833",
+    "consentText": "I consent to receive dad jokes via SMS at the phone number provided",
+    "timestamp": "2025-03-21T20:57:12.114Z",
+    "ipAddress": "::1"
+  },
+  {
+    "phoneNumber": "17815215833",
+    "consentText": "I consent to receive dad jokes via SMS at the phone number provided",
+    "timestamp": "2025-03-21T23:55:25.751Z",
+    "ipAddress": "::1",
+    "messages": [
+      "What did the clock do when it was hungry?",
+      "It went back four seconds!"
+    ]
+  },
+  {
+    "phoneNumber": "17815215833",
+    "consentText": "I consent to receive dad jokes via SMS at the phone number provided",
+    "timestamp": "2025-03-21T23:55:29.347Z",
+    "ipAddress": "::1"
+  }
+]
