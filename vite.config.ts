@@ -5,4 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/dad-jokes-sms/',
+  server: {
+    port: 5174,
+    strictPort: true // This will make Vite fail if port 5174 is not available
+  }
 })
