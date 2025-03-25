@@ -86,11 +86,6 @@ const sophisticatedJokes = [
   }
 ];
 
-interface Joke {
-  question: string;
-  punchline: string;
-}
-
 function App() {
   const [joke, setJoke] = useState<string>('');
   const [currentJokeIndex, setCurrentJokeIndex] = useState<number>(-1);
