@@ -4,6 +4,7 @@ import './App.css'
 
 // Get the API base URL from environment variables
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+console.log('Initially configured API URL:', apiBaseUrl);
 
 // Family-friendly dad jokes array
 const sophisticatedJokes = [
@@ -109,11 +110,62 @@ const handleApiError = (error: any) => {
   }
 };
 
+// Function to test if an API endpoint is reachable
+async function testApiConnection(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${url}/api/generate-joke`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      mode: 'cors',
+      cache: 'no-cache',
+    });
+    return response.ok;
+  } catch (err) {
+    console.error(`Connection test failed for ${url}:`, err);
+    return false;
+  }
+}
+
 function App() {
   const [joke, setJoke] = useState<string>('');
   const [currentJokeIndex, setCurrentJokeIndex] = useState<number>(-1);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [effectiveApiUrl, setEffectiveApiUrl] = useState<string>(apiBaseUrl);
+  
+  // Test API connection on initial load
+  useEffect(() => {
+    async function checkApiConnectivity() {
+      // First try the configured URL
+      if (apiBaseUrl && await testApiConnection(apiBaseUrl)) {
+        console.log('Using configured API URL:', apiBaseUrl);
+        setEffectiveApiUrl(apiBaseUrl);
+        return;
+      }
+      
+      // Try Railway production URL as fallback
+      const railwayUrl = 'https://dad-jokes-sms-production.up.railway.app';
+      if (await testApiConnection(railwayUrl)) {
+        console.log('Using Railway URL:', railwayUrl);
+        setEffectiveApiUrl(railwayUrl);
+        return;
+      }
+      
+      // Fall back to localhost for development
+      const localUrl = 'http://localhost:3001';
+      if (await testApiConnection(localUrl)) {
+        console.log('Using localhost URL:', localUrl);
+        setEffectiveApiUrl(localUrl);
+        return;
+      }
+      
+      // No working API found, will use fallback jokes
+      console.warn('No working API found, using client-side jokes only');
+      setEffectiveApiUrl('');
+    }
+    
+    checkApiConnectivity();
+  }, []);
 
   const getRandomJoke = () => {
     const newIndex = Math.floor(Math.random() * sophisticatedJokes.length);
@@ -126,13 +178,22 @@ function App() {
     setLoading(true);
     setError(null);
     
+    // If no API is available, use fallback jokes
+    if (!effectiveApiUrl) {
+      setTimeout(() => {
+        getRandomJoke();
+        setLoading(false);
+      }, 500);
+      return;
+    }
+    
     try {
       // Show debug information
       console.log('Environment:', import.meta.env.MODE);
-      console.log('API Base URL:', apiBaseUrl);
+      console.log('Using API URL:', effectiveApiUrl);
       
       // Determine API base URL
-      const apiUrl = `${apiBaseUrl}/api/generate-joke`;
+      const apiUrl = `${effectiveApiUrl}/api/generate-joke`;
       console.log('Full API URL:', apiUrl);
       
       const response = await fetch(apiUrl, {

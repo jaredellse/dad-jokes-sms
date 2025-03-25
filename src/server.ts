@@ -4,6 +4,13 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import fs from 'fs/promises';
 import OpenAI from 'openai';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ES Module compatibility for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
 
 dotenv.config();
 
@@ -22,10 +29,29 @@ const app = express();
 app.use(express.json());
 
 // Configure CORS
+const allowedOrigins = [
+  'http://localhost:5174',
+  'https://jaredellse.github.io',
+  'https://jaredellse.github.io/dad-jokes-sms',
+  'https://jaredellse.github.io/dad-jokes-sms/',
+];
+
 const corsOptions = {
-  origin: isDevelopment 
-    ? 'http://localhost:5174'
-    : 'https://jaredellse.github.io/dad-jokes-sms',
+  origin: function (origin: string | undefined, callback: (error: Error | null, success?: boolean) => void) {
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    
+    console.log('Received request from origin:', origin);
+    
+    if (isDevelopment || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed for this origin'));
+    }
+  },
   methods: ['GET', 'POST', 'OPTIONS'],
   credentials: true,
   optionsSuccessStatus: 204
@@ -41,6 +67,22 @@ app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
+
+// Serve static files from the dist directory (Vite output)
+if (!isDevelopment) {
+  console.log('Setting up static file serving from dist directory');
+  const distPath = path.join(rootDir, 'dist');
+  app.use(express.static(distPath));
+  
+  // Catch-all route for SPA client-side routing
+  app.get('*', (req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 interface MockTwilioClient {
   messages: {
@@ -209,7 +251,7 @@ const inMemoryStorage: {
 async function readConsents(): Promise<any[]> {
   if (isDevelopment) {
     try {
-      const data = await fs.readFile('consents.json', 'utf-8');
+      const data = await fs.readFile(path.join(rootDir, 'consents.json'), 'utf-8');
       return JSON.parse(data);
     } catch (error) {
       return [];
@@ -240,7 +282,7 @@ async function saveConsent(consent: any): Promise<void> {
   }
 
   if (isDevelopment) {
-    await fs.writeFile('consents.json', JSON.stringify(consents, null, 2));
+    await fs.writeFile(path.join(rootDir, 'consents.json'), JSON.stringify(consents, null, 2));
   } else {
     inMemoryStorage.consents = consents;
   }
@@ -250,7 +292,7 @@ async function saveConsent(consent: any): Promise<void> {
 async function readUnsubscribed(): Promise<string[]> {
   if (isDevelopment) {
     try {
-      const data = await fs.readFile('unsubscribed.json', 'utf-8');
+      const data = await fs.readFile(path.join(rootDir, 'unsubscribed.json'), 'utf-8');
       return JSON.parse(data);
     } catch (error) {
       // If file doesn't exist, return empty array
@@ -267,7 +309,7 @@ async function saveUnsubscribed(phoneNumber: string): Promise<void> {
   if (!unsubscribed.includes(phoneNumber)) {
     unsubscribed.push(phoneNumber);
     if (isDevelopment) {
-      await fs.writeFile('unsubscribed.json', JSON.stringify(unsubscribed, null, 2));
+      await fs.writeFile(path.join(rootDir, 'unsubscribed.json'), JSON.stringify(unsubscribed, null, 2));
     } else {
       inMemoryStorage.unsubscribed = unsubscribed;
     }
@@ -364,7 +406,7 @@ app.post('/api/sms-webhook', express.urlencoded({ extended: false }), async (req
     const filtered = unsubscribed.filter(num => num !== From);
     
     if (isDevelopment) {
-      await fs.writeFile('unsubscribed.json', JSON.stringify(filtered, null, 2));
+      await fs.writeFile(path.join(rootDir, 'unsubscribed.json'), JSON.stringify(filtered, null, 2));
     } else {
       inMemoryStorage.unsubscribed = filtered;
     }
