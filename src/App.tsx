@@ -104,6 +104,44 @@ function App() {
     setError(null);
     
     try {
+      // Check if we're in the GitHub Pages environment
+      const isGitHubPages = window.location.hostname.includes('github.io');
+      
+      if (isGitHubPages) {
+        // Provide a fallback joke for GitHub Pages deployment
+        setTimeout(() => {
+          const fallbackJokes = [
+            { setup: "I'm reading a book on anti-gravity.", punchline: "It's impossible to put down!" },
+            { setup: "What do you call a fish with no eyes?", punchline: "Fsh!" },
+            { setup: "Why did the developer go broke?", punchline: "Because they used up all their cache!" },
+            { setup: "Why don't scientists trust atoms?", punchline: "Because they make up everything!" },
+            { setup: "What do you call a factory that makes products that are just OK?", punchline: "A satisfactory!" }
+          ];
+          
+          const randomIndex = Math.floor(Math.random() * fallbackJokes.length);
+          const aiJoke = fallbackJokes[randomIndex];
+          
+          setCurrentJokeIndex(-1);
+          setJoke(`${aiJoke.setup} ${aiJoke.punchline}`);
+          
+          // Update the DOM directly for the joke container
+          const jokeElement = document.querySelector('.joke-container');
+          if (jokeElement) {
+            const questionElement = jokeElement.querySelector('.joke-question');
+            const punchlineElement = jokeElement.querySelector('.joke-punchline');
+            
+            if (questionElement && punchlineElement) {
+              questionElement.textContent = aiJoke.setup;
+              punchlineElement.textContent = aiJoke.punchline;
+            }
+          }
+          
+          setLoading(false);
+        }, 1000); // Add a slight delay to simulate API call
+        
+        return;
+      }
+      
       const response = await fetch('/api/generate-joke');
       
       if (!response.ok) {

@@ -9,6 +9,7 @@ export const SmsSender: React.FC<SmsSenderProps> = ({ joke }) => {
   const [hasConsent, setHasConsent] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const isGitHubPages = window.location.hostname.includes('github.io');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,12 +40,24 @@ export const SmsSender: React.FC<SmsSenderProps> = ({ joke }) => {
       console.log('Question part:', question);
       console.log('Punchline part:', punchline);
       
+      // If in GitHub Pages environment, show a message instead of making API calls
+      if (isGitHubPages) {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setStatus('success');
+        
+        // Reset form
+        setPhoneNumbers('');
+        setHasConsent(false);
+        return;
+      }
+      
       // Split phone numbers by comma and trim whitespace
       const numbers = phoneNumbers.split(',').map(num => num.trim());
       
       // Send the question to all numbers
       const questionPromises = numbers.map(number => 
-        fetch('http://localhost:3001/api/send-sms', {
+        fetch('/api/send-sms', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -71,7 +84,7 @@ export const SmsSender: React.FC<SmsSenderProps> = ({ joke }) => {
 
         // Send the punchline to all numbers
         const punchlinePromises = numbers.map(number =>
-          fetch('http://localhost:3001/api/send-sms', {
+          fetch('/api/send-sms', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -134,11 +147,21 @@ export const SmsSender: React.FC<SmsSenderProps> = ({ joke }) => {
       </form>
 
       {status === 'success' && (
-        <p className="success">Joke sent successfully to all numbers!</p>
+        <p className="success">
+          {isGitHubPages 
+            ? 'This is a demo mode in GitHub Pages. In the real app, the joke would be sent to the specified numbers.' 
+            : 'Joke sent successfully to all numbers!'}
+        </p>
       )}
 
       {status === 'error' && (
         <p className="error">{errorMessage}</p>
+      )}
+      
+      {isGitHubPages && status !== 'success' && (
+        <p className="notice">
+          Note: This is running on GitHub Pages. SMS functionality is simulated and won't actually send messages.
+        </p>
       )}
     </div>
   );

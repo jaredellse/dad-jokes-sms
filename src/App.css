@@ -140,3 +140,12 @@ button:disabled {
   margin-top: 1rem;
   font-style: italic;
 }
+
+.notice {
+  color: #3182ce;
+  margin-top: 1rem;
+  font-style: italic;
+  padding: 0.5rem;
+  background-color: #ebf8ff;
+  border-radius: 4px;
+}
