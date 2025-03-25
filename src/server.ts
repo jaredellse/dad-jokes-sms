@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, RequestHandler } from 'express';
 import twilio, { Twilio } from 'twilio';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -169,7 +169,7 @@ async function isUnsubscribed(phoneNumber: string): Promise<boolean> {
   return unsubscribed.includes(phoneNumber);
 }
 
-app.post('/api/send-sms', async (req, res) => {
+const sendSmsHandler: RequestHandler = async (req, res) => {
   try {
     const { to, message, isQuestion } = req.body;
     
@@ -187,7 +187,8 @@ app.post('/api/send-sms', async (req, res) => {
     }
 
     if (subscribedRecipients.length === 0) {
-      return res.json({ success: false, error: 'All recipients have unsubscribed' });
+      res.json({ success: false, error: 'All recipients have unsubscribed' });
+      return;
     }
     
     // Save consent for each recipient
@@ -226,7 +227,9 @@ app.post('/api/send-sms', async (req, res) => {
       details: error
     });
   }
-});
+};
+
+app.post('/api/send-sms', sendSmsHandler);
 
 // Handle incoming SMS (for unsubscribe)
 app.post('/api/sms-webhook', express.urlencoded({ extended: false }), async (req: Request, res: Response) => {
