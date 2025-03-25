@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 
+// Get the API base URL from environment variables
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+
 interface SmsSenderProps {
   joke: string;
 }
@@ -57,7 +60,7 @@ export const SmsSender: React.FC<SmsSenderProps> = ({ joke }) => {
       
       // Send the question to all numbers
       const questionPromises = numbers.map(number => 
-        fetch('/api/send-sms', {
+        fetch(`${apiBaseUrl}/api/send-sms`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -84,7 +87,7 @@ export const SmsSender: React.FC<SmsSenderProps> = ({ joke }) => {
 
         // Send the punchline to all numbers
         const punchlinePromises = numbers.map(number =>
-          fetch('/api/send-sms', {
+          fetch(`${apiBaseUrl}/api/send-sms`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

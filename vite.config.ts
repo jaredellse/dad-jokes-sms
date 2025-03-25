@@ -8,7 +8,13 @@ export default defineConfig({
   ...(process.env.NODE_ENV === 'development' ? {
     server: {
       port: 5174,
-      strictPort: true // This will make Vite fail if port 5174 is not available
+      strictPort: true, // This will make Vite fail if port 5174 is not available
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true
+        }
+      }
     }
   } : {})
 })

@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { SmsSender } from './components/SmsSender'
 import './App.css'
 
+// Get the API base URL from environment variables
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+
 // Family-friendly dad jokes array
 const sophisticatedJokes = [
   {
@@ -142,7 +145,7 @@ function App() {
         return;
       }
       
-      const response = await fetch('/api/generate-joke');
+      const response = await fetch(`${apiBaseUrl}/api/generate-joke`);
       
       if (!response.ok) {
         throw new Error('Failed to generate joke');
