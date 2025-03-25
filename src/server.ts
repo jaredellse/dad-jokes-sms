@@ -10,11 +10,19 @@ import { fileURLToPath } from 'url';
 // ES Module compatibility for __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, '..');
+const rootDir = process.env.NODE_ENV === 'production' 
+  ? path.resolve(__dirname, '..') // In production (compiled JS)
+  : path.resolve(__dirname, '..'); // In development (TS source)
 
+// Load environment variables
 dotenv.config();
 
+// Set environment mode
 const isDevelopment = process.env.NODE_ENV !== 'production';
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('isDevelopment:', isDevelopment);
+console.log('__dirname:', __dirname);
+console.log('rootDir:', rootDir);
 
 // Debug logging for environment variables
 console.log('Checking Twilio configuration...');
@@ -23,39 +31,27 @@ console.log('TWILIO_AUTH_TOKEN:', process.env.TWILIO_AUTH_TOKEN ? 'Present' : 'M
 console.log('TWILIO_PHONE_NUMBER:', process.env.TWILIO_PHONE_NUMBER ? 'Present' : 'Missing');
 console.log('TWILIO_MESSAGING_SERVICE_SID:', process.env.TWILIO_MESSAGING_SERVICE_SID ? 'Present' : 'Missing');
 console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'Present' : 'Missing');
-console.log('Development mode:', isDevelopment ? 'Yes' : 'No');
 
 const app = express();
 app.use(express.json());
 
 // Configure CORS
-const allowedOrigins = [
-  'http://localhost:5174',
-  'https://jaredellse.github.io',
-  'https://jaredellse.github.io/dad-jokes-sms',
-  'https://jaredellse.github.io/dad-jokes-sms/',
-];
+const corsOptions = isDevelopment 
+  ? {
+      // Development - restrict to localhost
+      origin: 'http://localhost:5174',
+      methods: ['GET', 'POST', 'OPTIONS'],
+      credentials: true,
+      optionsSuccessStatus: 204
+    }
+  : {
+      // Production - allow more origins
+      origin: '*',
+      methods: ['GET', 'POST', 'OPTIONS'],
+      optionsSuccessStatus: 204
+    };
 
-const corsOptions = {
-  origin: function (origin: string | undefined, callback: (error: Error | null, success?: boolean) => void) {
-    // Allow requests with no origin (like mobile apps, curl, postman)
-    if (!origin) {
-      callback(null, true);
-      return;
-    }
-    
-    console.log('Received request from origin:', origin);
-    
-    if (isDevelopment || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS not allowed for this origin'));
-    }
-  },
-  methods: ['GET', 'POST', 'OPTIONS'],
-  credentials: true,
-  optionsSuccessStatus: 204
-};
+console.log('CORS configuration:', corsOptions);
 
 app.use(cors(corsOptions));
 
@@ -70,18 +66,27 @@ app.use((req, res, next) => {
 
 // Serve static files from the dist directory (Vite output)
 if (!isDevelopment) {
-  console.log('Setting up static file serving from dist directory');
-  const distPath = path.join(rootDir, 'dist');
-  app.use(express.static(distPath));
-  
-  // Catch-all route for SPA client-side routing
-  app.get('*', (req, res, next) => {
-    // Skip API routes
-    if (req.path.startsWith('/api/')) {
-      return next();
+  try {
+    const distPath = path.join(rootDir, 'dist');
+    console.log('Setting up static file serving from:', distPath);
+    
+    // Check if the dist directory exists
+    const distStats = await fs.stat(distPath).catch(() => null);
+    if (distStats && distStats.isDirectory()) {
+      console.log('Dist directory exists, serving static files');
+      app.use(express.static(distPath));
+      
+      // Catch-all route for SPA client-side routing
+      app.get(/^(?!\/?api).+/, (req, res) => {
+        console.log('Serving index.html for route:', req.path);
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    } else {
+      console.log('Dist directory not found at:', distPath);
     }
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
+  } catch (error) {
+    console.error('Error setting up static file serving:', error);
+  }
 }
 
 interface MockTwilioClient {

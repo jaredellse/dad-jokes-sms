@@ -180,6 +180,7 @@ function App() {
     
     // If no API is available, use fallback jokes
     if (!effectiveApiUrl) {
+      console.log('No API URL available, using local jokes');
       setTimeout(() => {
         getRandomJoke();
         setLoading(false);
@@ -196,14 +197,11 @@ function App() {
       const apiUrl = `${effectiveApiUrl}/api/generate-joke`;
       console.log('Full API URL:', apiUrl);
       
-      const response = await fetch(apiUrl, {
+      // Simplified fetch with fewer options
+      const response = await fetch(apiUrl, { 
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        mode: 'cors',
-        cache: 'no-cache',
+        headers: { 'Accept': 'application/json' },
+        mode: 'cors'
       });
       
       console.log('Response status:', response.status);
