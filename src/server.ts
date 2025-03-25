@@ -120,10 +120,46 @@ const openai = new OpenAI({
   apiKey: getRequiredEnvVar('OPENAI_API_KEY'),
 });
 
-// Function to generate a dad joke using OpenAI
+// Add a list of fallback jokes
+const fallbackJokes = [
+  {
+    setup: "Why don't scientists trust atoms?",
+    punchline: "Because they make up everything!"
+  },
+  {
+    setup: "What did the coffee report to the police?",
+    punchline: "A mugging!"
+  },
+  {
+    setup: "Why did the scarecrow win an award?",
+    punchline: "Because he was outstanding in his field!"
+  },
+  {
+    setup: "What do you call a bear with no teeth?",
+    punchline: "A gummy bear!"
+  },
+  {
+    setup: "What do you call a fake noodle?",
+    punchline: "An impasta!"
+  }
+];
+
+// Function to get a random fallback joke
+function getRandomFallbackJoke() {
+  const randomIndex = Math.floor(Math.random() * fallbackJokes.length);
+  return fallbackJokes[randomIndex];
+}
+
+// Function to generate a dad joke using OpenAI with timeout
 async function generateDadJoke(): Promise<{ setup: string, punchline: string }> {
   try {
-    const response = await openai.chat.completions.create({
+    // Create a promise that rejects after 5 seconds
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('OpenAI request timed out')), 5000);
+    });
+
+    // Create the OpenAI request promise
+    const openAiPromise = openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
@@ -138,30 +174,30 @@ async function generateDadJoke(): Promise<{ setup: string, punchline: string }> 
       temperature: 0.7,
     });
 
+    // Race between the timeout and the actual request
+    const response = await Promise.race([openAiPromise, timeoutPromise]) as Awaited<typeof openAiPromise>;
     const content = response.choices[0]?.message?.content?.trim() || '';
     
     try {
       // Parse the JSON response
       const jokeObject = JSON.parse(content);
-      return {
-        setup: jokeObject.setup,
-        punchline: jokeObject.punchline
-      };
+      if (typeof jokeObject.setup === 'string' && typeof jokeObject.punchline === 'string' &&
+          jokeObject.setup.length > 0 && jokeObject.punchline.length > 0) {
+        return {
+          setup: jokeObject.setup,
+          punchline: jokeObject.punchline
+        };
+      } else {
+        console.warn('Invalid joke format from OpenAI, using fallback');
+        return getRandomFallbackJoke();
+      }
     } catch (parseError) {
       console.error('Failed to parse OpenAI response:', content);
-      // Fallback in case parsing fails
-      return {
-        setup: "Why don't scientists trust atoms?",
-        punchline: "Because they make up everything!"
-      };
+      return getRandomFallbackJoke();
     }
   } catch (error) {
     console.error('Error generating joke with OpenAI:', error);
-    // Fallback joke
-    return {
-      setup: "Why don't scientists trust atoms?",
-      punchline: "Because they make up everything!"
-    };
+    return getRandomFallbackJoke();
   }
 }
 
@@ -171,10 +207,12 @@ app.get('/api/generate-joke', async (_: Request, res: Response) => {
     const joke = await generateDadJoke();
     res.json({ success: true, joke });
   } catch (error) {
-    console.error('Error generating joke:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Failed to generate joke'
+    console.error('Error in joke endpoint:', error);
+    // Even if there's an error, return a fallback joke
+    res.json({ 
+      success: true, 
+      joke: getRandomFallbackJoke(),
+      wasError: true
     });
   }
 });
