@@ -1,31 +1,37 @@
 # Dad Jokes SMS
 
-A web application that sends dad jokes via SMS using Twilio. Features include:
-- Family-friendly dad jokes
-- Two-part delivery (setup and punchline)
-- User consent tracking
-- Group messaging support
+A simple service that generates dad jokes and sends them via SMS using Twilio.
 
-## Setup
+## Quick Deploy
 
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Create a `.env` file with your Twilio credentials:
-   ```
-   TWILIO_ACCOUNT_SID=your_account_sid
-   TWILIO_AUTH_TOKEN=your_auth_token
-   TWILIO_PHONE_NUMBER=your_twilio_number
-   TWILIO_MESSAGING_SERVICE_SID=your_messaging_service_sid
-   ```
-4. Start the development server: `npm run dev`
-5. Start the backend server: `npm run server`
+### Deploy to Render (Recommended)
+
+For the fastest and most reliable deployment:
+
+1. Create a free account at [render.com](https://render.com)
+2. Click this button to deploy directly to Render:
+   [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/jaredellse/dad-jokes-sms)
+3. Once deployed, your API will be available at:
+   - https://dad-jokes-sms-api.onrender.com/api/generate-joke
+   - https://dad-jokes-sms-api.onrender.com/api/health
+   - https://dad-jokes-sms-api.onrender.com/api/sms-webhook (for Twilio)
+
+4. Add these webhook URLs to your Twilio configuration.
+
+## API Endpoints
+
+- `GET /api/generate-joke` - Generates a random dad joke
+- `POST /api/sms-webhook` - Webhook for Twilio SMS (STOP/START commands)
+- `GET /api/health` - Health check endpoint
 
 ## Development
 
-- Frontend: React + TypeScript + Vite
-- Backend: Express + TypeScript
-- SMS: Twilio API
+```
+npm install
+npm run dev        # Run frontend development server
+npm run server:dev # Run backend development server
+```
 
 ## License
 
-MIT
+MIT License
