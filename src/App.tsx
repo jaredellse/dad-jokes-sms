@@ -86,15 +86,65 @@ const sophisticatedJokes = [
   }
 ];
 
+interface Joke {
+  question: string;
+  punchline: string;
+}
+
 function App() {
   const [joke, setJoke] = useState<string>('');
   const [currentJokeIndex, setCurrentJokeIndex] = useState<number>(-1);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const getRandomJoke = () => {
     const newIndex = Math.floor(Math.random() * sophisticatedJokes.length);
     setCurrentJokeIndex(newIndex);
     const selectedJoke = sophisticatedJokes[newIndex];
     setJoke(`${selectedJoke.question} ${selectedJoke.punchline}`);
+  };
+
+  const generateAIJoke = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/generate-joke');
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate joke');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.joke) {
+        setCurrentJokeIndex(-1); // No longer using predefined jokes
+        const aiJoke: { setup: string, punchline: string } = data.joke;
+        setJoke(`${aiJoke.setup} ${aiJoke.punchline}`);
+        
+        // Display it in the joke container
+        const jokeElement = document.querySelector('.joke-container');
+        if (jokeElement) {
+          const questionElement = jokeElement.querySelector('.joke-question');
+          const punchlineElement = jokeElement.querySelector('.joke-punchline');
+          
+          if (questionElement && punchlineElement) {
+            questionElement.textContent = aiJoke.setup;
+            punchlineElement.textContent = aiJoke.punchline;
+          }
+        }
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err) {
+      console.error('Error generating AI joke:', err);
+      setError('Failed to generate a joke. Please try again.');
+      
+      // Fallback to random joke if AI fails
+      getRandomJoke();
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -105,13 +155,24 @@ function App() {
     <div className="app">
       <h1>Family-Friendly Dad Jokes</h1>
       <div className="joke-container">
-        {currentJokeIndex !== -1 && (
+        {currentJokeIndex !== -1 ? (
           <>
             <p className="joke-question">{sophisticatedJokes[currentJokeIndex].question}</p>
             <p className="joke-punchline">{sophisticatedJokes[currentJokeIndex].punchline}</p>
           </>
+        ) : (
+          <>
+            <p className="joke-question">Loading joke...</p>
+            <p className="joke-punchline"></p>
+          </>
         )}
-        <button onClick={getRandomJoke}>Get New Joke</button>
+        <div className="buttons">
+          <button onClick={getRandomJoke} disabled={loading}>Get Random Joke</button>
+          <button onClick={generateAIJoke} disabled={loading}>
+            {loading ? 'Generating...' : 'Generate AI Joke'}
+          </button>
+        </div>
+        {error && <p className="error">{error}</p>}
       </div>
       {joke && <SmsSender joke={joke} />}
     </div>

@@ -3,6 +3,7 @@ import twilio, { Twilio } from 'twilio';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import fs from 'fs/promises';
+import OpenAI from 'openai';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ console.log('TWILIO_ACCOUNT_SID:', process.env.TWILIO_ACCOUNT_SID ? 'Present' : 
 console.log('TWILIO_AUTH_TOKEN:', process.env.TWILIO_AUTH_TOKEN ? 'Present' : 'Missing');
 console.log('TWILIO_PHONE_NUMBER:', process.env.TWILIO_PHONE_NUMBER ? 'Present' : 'Missing');
 console.log('TWILIO_MESSAGING_SERVICE_SID:', process.env.TWILIO_MESSAGING_SERVICE_SID ? 'Present' : 'Missing');
+console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'Present' : 'Missing');
 console.log('Development mode:', isDevelopment ? 'Yes' : 'No');
 
 const app = express();
@@ -59,6 +61,70 @@ if (!isDevelopment) {
     console.error('Error creating Twilio client:', error);
   }
 }
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Function to generate a dad joke using OpenAI
+async function generateDadJoke(): Promise<{ setup: string, punchline: string }> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a dad joke generator. Generate a funny, clean dad joke with a setup and punchline. Return ONLY a JSON object with format {\"setup\": \"joke setup\", \"punchline\": \"joke punchline\"}. No additional text or explanation."
+        },
+        {
+          role: "user",
+          content: "Generate a new dad joke"
+        }
+      ],
+      temperature: 0.7,
+    });
+
+    const content = response.choices[0]?.message?.content?.trim() || '';
+    
+    try {
+      // Parse the JSON response
+      const jokeObject = JSON.parse(content);
+      return {
+        setup: jokeObject.setup,
+        punchline: jokeObject.punchline
+      };
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', content);
+      // Fallback in case parsing fails
+      return {
+        setup: "Why don't scientists trust atoms?",
+        punchline: "Because they make up everything!"
+      };
+    }
+  } catch (error) {
+    console.error('Error generating joke with OpenAI:', error);
+    // Fallback joke
+    return {
+      setup: "Why don't scientists trust atoms?",
+      punchline: "Because they make up everything!"
+    };
+  }
+}
+
+// Add endpoint to generate a new dad joke
+app.get('/api/generate-joke', async (_, res) => {
+  try {
+    const joke = await generateDadJoke();
+    res.json({ success: true, joke });
+  } catch (error) {
+    console.error('Error generating joke:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to generate joke'
+    });
+  }
+});
 
 // Create a simple HTML page to display opt-in records
 app.get('/', async (_, res) => {

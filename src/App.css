@@ -38,6 +38,13 @@ h1 {
   border-left: 3px solid #646cff;
 }
 
+.buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
 button {
   background: #646cff;
   color: white;
@@ -48,6 +55,7 @@ button {
   font-size: 1.1em;
   transition: all 0.3s ease;
   font-family: 'Georgia', serif;
+  min-width: 180px;
 }
 
 button:hover {
