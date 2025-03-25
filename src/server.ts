@@ -25,13 +25,16 @@ app.use(express.json());
 const corsOptions = {
   origin: isDevelopment 
     ? 'http://localhost:5174'
-    : ['https://jaredellse.github.io'],
-  methods: ['GET', 'POST'],
+    : 'https://jaredellse.github.io',
+  methods: ['GET', 'POST', 'OPTIONS'],
   credentials: true,
   optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
+
+// Add preflight response for OPTIONS requests
+app.options('*', cors(corsOptions));
 
 // Log all incoming requests
 app.use((req, res, next) => {

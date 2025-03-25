@@ -127,56 +127,23 @@ function App() {
     setError(null);
     
     try {
-      // Check if we're in the GitHub Pages environment
-      const isGitHubPages = window.location.hostname.includes('github.io');
+      // Determine API base URL
+      const apiUrl = `${apiBaseUrl}/api/generate-joke`;
+      console.log('API URL:', apiUrl);
       
-      if (isGitHubPages) {
-        // Provide a fallback joke for GitHub Pages deployment
-        setTimeout(() => {
-          const fallbackJokes = [
-            { setup: "I'm reading a book on anti-gravity.", punchline: "It's impossible to put down!" },
-            { setup: "What do you call a fish with no eyes?", punchline: "Fsh!" },
-            { setup: "Why did the developer go broke?", punchline: "Because they used up all their cache!" },
-            { setup: "Why don't scientists trust atoms?", punchline: "Because they make up everything!" },
-            { setup: "What do you call a factory that makes products that are just OK?", punchline: "A satisfactory!" }
-          ];
-          
-          const randomIndex = Math.floor(Math.random() * fallbackJokes.length);
-          const aiJoke = fallbackJokes[randomIndex];
-          
-          setCurrentJokeIndex(-1);
-          setJoke(`${aiJoke.setup} ${aiJoke.punchline}`);
-          
-          // Update the DOM directly for the joke container
-          const jokeElement = document.querySelector('.joke-container');
-          if (jokeElement) {
-            const questionElement = jokeElement.querySelector('.joke-question');
-            const punchlineElement = jokeElement.querySelector('.joke-punchline');
-            
-            if (questionElement && punchlineElement) {
-              questionElement.textContent = aiJoke.setup;
-              punchlineElement.textContent = aiJoke.punchline;
-            }
-          }
-          
-          setLoading(false);
-        }, 1000); // Add a slight delay to simulate API call
-        
-        return;
-      }
-      
-      console.log('Fetching from:', `${apiBaseUrl}/api/generate-joke`);
-      const response = await fetch(`${apiBaseUrl}/api/generate-joke`, {
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        credentials: 'include'
+        mode: 'cors',
       });
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        throw new Error(`API error: ${response.status} - ${errorText || response.statusText}`);
       }
       
       const data = await response.json();
@@ -186,7 +153,7 @@ function App() {
         const aiJoke: { setup: string, punchline: string } = data.joke;
         setJoke(`${aiJoke.setup} ${aiJoke.punchline}`);
         
-        // Update the DOM
+        // Update the DOM directly for the joke container
         const jokeElement = document.querySelector('.joke-container');
         if (jokeElement) {
           const questionElement = jokeElement.querySelector('.joke-question');
