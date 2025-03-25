@@ -60,8 +60,8 @@ if (!isDevelopment) {
 
 interface TwilioMessageParams {
   to: string;
-  from: string;
   body: string;
+  from?: string;
   messagingServiceSid?: string;
 }
 
@@ -85,9 +85,19 @@ const mockTwilioClient: MockTwilioClient = {
   }
 };
 
+// Function to get required environment variable
+function getRequiredEnvVar(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+// Initialize Twilio client with proper type checking
 const client: Twilio | MockTwilioClient = isDevelopment ? mockTwilioClient : twilio(
-  process.env.TWILIO_ACCOUNT_SID!,
-  process.env.TWILIO_AUTH_TOKEN!
+  getRequiredEnvVar('TWILIO_ACCOUNT_SID'),
+  getRequiredEnvVar('TWILIO_AUTH_TOKEN')
 );
 
 // Test configuration
@@ -105,9 +115,9 @@ if (!isDevelopment) {
   }
 }
 
-// Initialize OpenAI client
+// Initialize OpenAI client with proper type checking
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: getRequiredEnvVar('OPENAI_API_KEY'),
 });
 
 // Function to generate a dad joke using OpenAI
@@ -314,7 +324,7 @@ async function isUnsubscribed(phoneNumber: string): Promise<boolean> {
 
 const sendSmsHandler: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { to, message, isQuestion } = req.body;
+    const { to, message } = req.body;
     
     if (!to || !message) {
       res.status(400).json({ 
@@ -324,8 +334,20 @@ const sendSmsHandler: RequestHandler = async (req: Request, res: Response): Prom
       return;
     }
 
-    // Ensure required environment variables are present
-    if (!process.env.TWILIO_PHONE_NUMBER && !process.env.TWILIO_MESSAGING_SERVICE_SID) {
+    // Validate phone number format
+    if (typeof to !== 'string' || typeof message !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'Phone number and message must be strings'
+      });
+      return;
+    }
+
+    // Get the messaging configuration
+    const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
+    const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+
+    if (!twilioNumber && !messagingServiceSid) {
       res.status(500).json({
         success: false,
         error: 'Server configuration error: Missing Twilio phone number or messaging service'
@@ -333,57 +355,32 @@ const sendSmsHandler: RequestHandler = async (req: Request, res: Response): Prom
       return;
     }
 
+    // Create base message params
     const messageParams: TwilioMessageParams = {
-      to: to as string,
-      from: process.env.TWILIO_PHONE_NUMBER as string,
-      body: message as string
+      to,
+      body: message
     };
 
-    if (process.env.TWILIO_MESSAGING_SERVICE_SID) {
-      messageParams.messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+    // Add either phone number or messaging service
+    if (twilioNumber) {
+      messageParams.from = twilioNumber;
+    } else if (messagingServiceSid) {
+      messageParams.messagingServiceSid = messagingServiceSid;
     }
 
-    console.log('Received SMS request:', { to, message, isQuestion });
-    
-    // Convert single number to array if needed
-    const recipients = Array.isArray(to) ? to : [to];
-    
-    // Filter out unsubscribed numbers
-    const subscribedRecipients = [];
-    for (const recipient of recipients) {
-      if (!(await isUnsubscribed(recipient))) {
-        subscribedRecipients.push(recipient);
-      }
-    }
-
-    if (subscribedRecipients.length === 0) {
-      res.json({ success: false, error: 'All recipients have unsubscribed' });
-      return;
-    }
-    
-    // Save consent for each recipient
-    for (const recipient of subscribedRecipients) {
-      await saveConsent({
-        phoneNumber: recipient,
-        consentText: "I consent to receive dad jokes via SMS at the phone number provided",
-        timestamp: new Date().toISOString(),
-        ipAddress: req.ip || req.connection.remoteAddress,
-        message: message
-      });
-    }
-
-    console.log('Attempting to send SMS to:', subscribedRecipients);
-    
-    // Add unsubscribe message for punchlines
-    const finalMessage = !isQuestion 
-      ? message + "\n\nTo stop receiving dad jokes, reply with STOP"
-      : message;
-
-    // Send message to all recipients as a group
     const result = await client.messages.create(messageParams);
 
+    // Save consent with proper type handling
+    await saveConsent({
+      phoneNumber: to,
+      consentText: "I consent to receive dad jokes via SMS at the phone number provided",
+      timestamp: new Date().toISOString(),
+      ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+      message
+    });
+
     console.log('SMS sent successfully:', result.sid);
-    res.json({ success: true, messageId: result.sid });
+    res.json({ success: true, messageSid: result.sid });
   } catch (error) {
     console.error('Error sending SMS:', error);
     res.status(500).json({ 
