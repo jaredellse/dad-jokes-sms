@@ -25,7 +25,7 @@ app.use(express.json());
 const corsOptions = {
   origin: isDevelopment 
     ? 'http://localhost:5174'
-    : 'https://jaredellse.github.io',
+    : 'https://jaredellse.github.io/dad-jokes-sms',
   methods: ['GET', 'POST', 'OPTIONS'],
   credentials: true,
   optionsSuccessStatus: 204
@@ -196,13 +196,26 @@ function maskPhoneNumber(phoneNumber: string): string {
   return phoneNumber.slice(0, -4).replace(/\d/g, '*') + phoneNumber.slice(-4);
 }
 
-// Function to read consents from file
+// In-memory storage for production environment
+const inMemoryStorage: {
+  consents: any[];
+  unsubscribed: string[];
+} = {
+  consents: [],
+  unsubscribed: []
+};
+
+// Function to read consents from file or memory
 async function readConsents(): Promise<any[]> {
-  try {
-    const data = await fs.readFile('consents.json', 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    return [];
+  if (isDevelopment) {
+    try {
+      const data = await fs.readFile('consents.json', 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      return [];
+    }
+  } else {
+    return inMemoryStorage.consents;
   }
 }
 
@@ -226,17 +239,25 @@ async function saveConsent(consent: any): Promise<void> {
     });
   }
 
-  await fs.writeFile('consents.json', JSON.stringify(consents, null, 2));
+  if (isDevelopment) {
+    await fs.writeFile('consents.json', JSON.stringify(consents, null, 2));
+  } else {
+    inMemoryStorage.consents = consents;
+  }
 }
 
 // Function to read unsubscribed numbers
 async function readUnsubscribed(): Promise<string[]> {
-  try {
-    const data = await fs.readFile('unsubscribed.json', 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    // If file doesn't exist, return empty array
-    return [];
+  if (isDevelopment) {
+    try {
+      const data = await fs.readFile('unsubscribed.json', 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      // If file doesn't exist, return empty array
+      return [];
+    }
+  } else {
+    return inMemoryStorage.unsubscribed;
   }
 }
 
@@ -245,7 +266,11 @@ async function saveUnsubscribed(phoneNumber: string): Promise<void> {
   const unsubscribed = await readUnsubscribed();
   if (!unsubscribed.includes(phoneNumber)) {
     unsubscribed.push(phoneNumber);
-    await fs.writeFile('unsubscribed.json', JSON.stringify(unsubscribed, null, 2));
+    if (isDevelopment) {
+      await fs.writeFile('unsubscribed.json', JSON.stringify(unsubscribed, null, 2));
+    } else {
+      inMemoryStorage.unsubscribed = unsubscribed;
+    }
   }
 }
 
@@ -337,7 +362,12 @@ app.post('/api/sms-webhook', express.urlencoded({ extended: false }), async (req
     // Remove from unsubscribed list
     const unsubscribed = await readUnsubscribed();
     const filtered = unsubscribed.filter(num => num !== From);
-    await fs.writeFile('unsubscribed.json', JSON.stringify(filtered, null, 2));
+    
+    if (isDevelopment) {
+      await fs.writeFile('unsubscribed.json', JSON.stringify(filtered, null, 2));
+    } else {
+      inMemoryStorage.unsubscribed = filtered;
+    }
     
     // Send confirmation
     await client.messages.create({

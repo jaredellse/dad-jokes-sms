@@ -127,9 +127,13 @@ function App() {
     setError(null);
     
     try {
+      // Show debug information
+      console.log('Environment:', import.meta.env.MODE);
+      console.log('API Base URL:', apiBaseUrl);
+      
       // Determine API base URL
       const apiUrl = `${apiBaseUrl}/api/generate-joke`;
-      console.log('API URL:', apiUrl);
+      console.log('Full API URL:', apiUrl);
       
       const response = await fetch(apiUrl, {
         method: 'GET',
@@ -138,7 +142,10 @@ function App() {
           'Accept': 'application/json',
         },
         mode: 'cors',
+        cache: 'no-cache',
       });
+      
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
         const errorText = await response.text();
