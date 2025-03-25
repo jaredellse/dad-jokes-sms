@@ -20,7 +20,24 @@ console.log('Development mode:', isDevelopment ? 'Yes' : 'No');
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// Configure CORS
+const corsOptions = {
+  origin: isDevelopment 
+    ? 'http://localhost:5174'
+    : ['https://jaredellse.github.io'],
+  methods: ['GET', 'POST'],
+  credentials: true,
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+
+// Log all incoming requests
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
 interface MockTwilioClient {
   messages: {

@@ -89,6 +89,26 @@ const sophisticatedJokes = [
   }
 ];
 
+// Add error handling utility
+const handleApiError = (error: any) => {
+  console.error('API Error:', error);
+  if (error.response) {
+    // The request was made and the server responded with a status code
+    // that falls out of the range of 2xx
+    console.error('Response data:', error.response.data);
+    console.error('Response status:', error.response.status);
+    return `Server error: ${error.response.data?.error || 'Unknown error'}`;
+  } else if (error.request) {
+    // The request was made but no response was received
+    console.error('No response received');
+    return 'No response from server. Please check your connection.';
+  } else {
+    // Something happened in setting up the request that triggered an Error
+    console.error('Error setting up request:', error.message);
+    return error.message;
+  }
+};
+
 function App() {
   const [joke, setJoke] = useState<string>('');
   const [currentJokeIndex, setCurrentJokeIndex] = useState<number>(-1);
@@ -145,20 +165,28 @@ function App() {
         return;
       }
       
-      const response = await fetch(`${apiBaseUrl}/api/generate-joke`);
+      console.log('Fetching from:', `${apiBaseUrl}/api/generate-joke`);
+      const response = await fetch(`${apiBaseUrl}/api/generate-joke`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
       
       if (!response.ok) {
-        throw new Error('Failed to generate joke');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
       
       if (data.success && data.joke) {
-        setCurrentJokeIndex(-1); // No longer using predefined jokes
+        setCurrentJokeIndex(-1);
         const aiJoke: { setup: string, punchline: string } = data.joke;
         setJoke(`${aiJoke.setup} ${aiJoke.punchline}`);
         
-        // Display it in the joke container
+        // Update the DOM
         const jokeElement = document.querySelector('.joke-container');
         if (jokeElement) {
           const questionElement = jokeElement.querySelector('.joke-question');
@@ -174,7 +202,8 @@ function App() {
       }
     } catch (err) {
       console.error('Error generating AI joke:', err);
-      setError('Failed to generate a joke. Please try again.');
+      const errorMessage = handleApiError(err);
+      setError(`Failed to generate joke: ${errorMessage}`);
       
       // Fallback to random joke if AI fails
       getRandomJoke();
