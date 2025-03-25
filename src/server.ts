@@ -1,4 +1,4 @@
-import express, { Request, Response, RequestHandler } from 'express';
+import express, { Request, Response, NextFunction, RequestHandler } from 'express';
 import twilio, { Twilio } from 'twilio';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -42,7 +42,7 @@ app.use(cors({
 }));
 
 // Log all incoming requests
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
@@ -58,16 +58,23 @@ if (!isDevelopment) {
   }
 }
 
+interface TwilioMessageParams {
+  to: string;
+  from: string;
+  body: string;
+  messagingServiceSid?: string;
+}
+
 interface MockTwilioClient {
   messages: {
-    create: (params: any) => Promise<{ sid: string }>;
+    create: (params: TwilioMessageParams) => Promise<{ sid: string }>;
   }
 }
 
 // Mock Twilio client for development
 const mockTwilioClient: MockTwilioClient = {
   messages: {
-    create: async (params: any) => {
+    create: async (params: TwilioMessageParams) => {
       console.log('\n📱 MOCK SMS SENT:');
       console.log('To:', params.to);
       console.log('From:', params.from);
@@ -149,7 +156,7 @@ async function generateDadJoke(): Promise<{ setup: string, punchline: string }> 
 }
 
 // Add endpoint to generate a new dad joke
-app.get('/api/generate-joke', async (_, res) => {
+app.get('/api/generate-joke', async (_: Request, res: Response) => {
   try {
     const joke = await generateDadJoke();
     res.json({ success: true, joke });
@@ -163,7 +170,7 @@ app.get('/api/generate-joke', async (_, res) => {
 });
 
 // Create a simple HTML page to display opt-in records
-app.get('/', async (_, res) => {
+app.get('/', async (_: Request, res: Response) => {
   try {
     const consents = await readConsents();
     const html = `
@@ -221,8 +228,17 @@ const inMemoryStorage: {
   unsubscribed: []
 };
 
+interface Consent {
+  phoneNumber: string;
+  consentText: string;
+  timestamp: string;
+  ipAddress: string;
+  messages?: string[];
+  message?: string;  // Add this for backward compatibility
+}
+
 // Function to read consents from file or memory
-async function readConsents(): Promise<any[]> {
+async function readConsents(): Promise<Consent[]> {
   if (isDevelopment) {
     try {
       const data = await fs.readFile(path.join(rootDir, 'consents.json'), 'utf-8');
@@ -236,7 +252,7 @@ async function readConsents(): Promise<any[]> {
 }
 
 // Function to save or update consent
-async function saveConsent(consent: any): Promise<void> {
+async function saveConsent(consent: Consent): Promise<void> {
   const consents = await readConsents();
   const existingIndex = consents.findIndex(c => 
     c.phoneNumber === consent.phoneNumber && 
@@ -244,14 +260,14 @@ async function saveConsent(consent: any): Promise<void> {
   );
 
   if (existingIndex >= 0) {
-    // Update existing consent for today
     consents[existingIndex].messages = consents[existingIndex].messages || [];
-    consents[existingIndex].messages.push(consent.message);
+    if (consent.message) {
+      consents[existingIndex].messages.push(consent.message);
+    }
   } else {
-    // Create new consent record
     consents.push({
       ...consent,
-      messages: [consent.message]
+      messages: consent.message ? [consent.message] : []
     });
   }
 
@@ -296,10 +312,37 @@ async function isUnsubscribed(phoneNumber: string): Promise<boolean> {
   return unsubscribed.includes(phoneNumber);
 }
 
-const sendSmsHandler: RequestHandler = async (req, res) => {
+const sendSmsHandler: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   try {
     const { to, message, isQuestion } = req.body;
     
+    if (!to || !message) {
+      res.status(400).json({ 
+        success: false, 
+        error: 'Phone number and message are required' 
+      });
+      return;
+    }
+
+    // Ensure required environment variables are present
+    if (!process.env.TWILIO_PHONE_NUMBER && !process.env.TWILIO_MESSAGING_SERVICE_SID) {
+      res.status(500).json({
+        success: false,
+        error: 'Server configuration error: Missing Twilio phone number or messaging service'
+      });
+      return;
+    }
+
+    const messageParams: TwilioMessageParams = {
+      to: to as string,
+      from: process.env.TWILIO_PHONE_NUMBER as string,
+      body: message as string
+    };
+
+    if (process.env.TWILIO_MESSAGING_SERVICE_SID) {
+      messageParams.messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+    }
+
     console.log('Received SMS request:', { to, message, isQuestion });
     
     // Convert single number to array if needed
@@ -337,12 +380,7 @@ const sendSmsHandler: RequestHandler = async (req, res) => {
       : message;
 
     // Send message to all recipients as a group
-    const result = await client.messages.create({
-      body: finalMessage,
-      to: subscribedRecipients.join(','),
-      from: process.env.TWILIO_PHONE_NUMBER,
-      messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID
-    });
+    const result = await client.messages.create(messageParams);
 
     console.log('SMS sent successfully:', result.sid);
     res.json({ success: true, messageId: result.sid });
@@ -350,8 +388,7 @@ const sendSmsHandler: RequestHandler = async (req, res) => {
     console.error('Error sending SMS:', error);
     res.status(500).json({ 
       success: false, 
-      error: error instanceof Error ? error.message : 'Failed to send SMS',
-      details: error
+      error: error instanceof Error ? error.message : 'Failed to send SMS'
     });
   }
 };
