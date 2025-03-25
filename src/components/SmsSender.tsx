@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 
-// Get the API base URL from environment variables
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-
 interface SmsSenderProps {
   joke: string;
+  apiBaseUrl: string;
+  onError?: (message: string) => void;
 }
 
-export const SmsSender: React.FC<SmsSenderProps> = ({ joke }) => {
+export const SmsSender: React.FC<SmsSenderProps> = ({ joke, apiBaseUrl, onError }) => {
   const [phoneNumbers, setPhoneNumbers] = useState<string>('');
   const [hasConsent, setHasConsent] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -18,7 +17,9 @@ export const SmsSender: React.FC<SmsSenderProps> = ({ joke }) => {
     e.preventDefault();
     if (!hasConsent) {
       setStatus('error');
-      setErrorMessage('Please provide consent to receive messages');
+      const error = 'Please provide consent to receive messages';
+      setErrorMessage(error);
+      onError?.(error);
       return;
     }
 
@@ -113,8 +114,10 @@ export const SmsSender: React.FC<SmsSenderProps> = ({ joke }) => {
       setHasConsent(false);
     } catch (error) {
       console.error('Error in handleSubmit:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to send messages';
       setStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to send messages');
+      setErrorMessage(errorMsg);
+      onError?.(errorMsg);
     }
   };
 

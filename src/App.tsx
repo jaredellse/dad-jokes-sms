@@ -178,13 +178,13 @@ function App() {
     setLoading(true);
     setError(null);
     
-    // If no API is available, use fallback jokes
+    // Show a random joke immediately
+    getRandomJoke();
+    
+    // If no API is available, just keep the random joke
     if (!effectiveApiUrl) {
       console.log('No API URL available, using local jokes');
-      setTimeout(() => {
-        getRandomJoke();
-        setLoading(false);
-      }, 500);
+      setLoading(false);
       return;
     }
     
@@ -197,49 +197,27 @@ function App() {
       const apiUrl = `${effectiveApiUrl}/api/generate-joke`;
       console.log('Full API URL:', apiUrl);
       
-      // Simplified fetch with fewer options
-      const response = await fetch(apiUrl, { 
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
-        mode: 'cors'
+        mode: 'cors',
+        cache: 'no-cache',
       });
-      
-      console.log('Response status:', response.status);
-      
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API error response:', errorText);
-        throw new Error(`API error: ${response.status} - ${errorText || response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
       if (data.success && data.joke) {
-        setCurrentJokeIndex(-1);
-        const aiJoke: { setup: string, punchline: string } = data.joke;
-        setJoke(`${aiJoke.setup} ${aiJoke.punchline}`);
-        
-        // Update the DOM directly for the joke container
-        const jokeElement = document.querySelector('.joke-container');
-        if (jokeElement) {
-          const questionElement = jokeElement.querySelector('.joke-question');
-          const punchlineElement = jokeElement.querySelector('.joke-punchline');
-          
-          if (questionElement && punchlineElement) {
-            questionElement.textContent = aiJoke.setup;
-            punchlineElement.textContent = aiJoke.punchline;
-          }
-        }
-      } else {
-        throw new Error('Invalid response format');
+        setJoke(`${data.joke.setup} ${data.joke.punchline}`);
+      } else if (data.error) {
+        throw new Error(data.error);
       }
-    } catch (err) {
-      console.error('Error generating AI joke:', err);
-      const errorMessage = handleApiError(err);
-      setError(`Failed to generate joke: ${errorMessage}`);
-      
-      // Fallback to random joke if AI fails
-      getRandomJoke();
+    } catch (error) {
+      console.error('Error fetching joke:', error);
+      setError(handleApiError(error));
+      // Keep the random joke displayed if there's an error
     } finally {
       setLoading(false);
     }
@@ -250,31 +228,41 @@ function App() {
   }, []);
 
   return (
-    <div className="app">
-      <h1>Family-Friendly Dad Jokes</h1>
-      <div className="joke-container">
-        {currentJokeIndex !== -1 ? (
-          <>
-            <p className="joke-question">{sophisticatedJokes[currentJokeIndex].question}</p>
-            <p className="joke-punchline">{sophisticatedJokes[currentJokeIndex].punchline}</p>
-          </>
-        ) : (
-          <>
-            <p className="joke-question">Loading joke...</p>
-            <p className="joke-punchline"></p>
-          </>
-        )}
-        <div className="buttons">
-          <button onClick={getRandomJoke} disabled={loading}>Get Random Joke</button>
-          <button onClick={generateAIJoke} disabled={loading}>
+    <div className="app-container">
+      <div className="content">
+        <h1>Dad Jokes SMS</h1>
+        <p>Generate and send dad jokes via SMS!</p>
+        
+        <div className="joke-section">
+          <div className="joke-container">
+            {joke ? (
+              <>
+                <p className="joke-text">{joke}</p>
+                {loading && <p className="loading-text">Loading new joke...</p>}
+              </>
+            ) : (
+              <p className="joke-text">Click the button to generate a joke!</p>
+            )}
+            {error && <p className="error-text">{error}</p>}
+          </div>
+          
+          <button 
+            onClick={generateAIJoke} 
+            disabled={loading}
+            className={loading ? 'loading' : ''}
+          >
             {loading ? 'Generating...' : 'Generate AI Joke'}
           </button>
         </div>
-        {error && <p className="error">{error}</p>}
+
+        <SmsSender 
+          joke={joke} 
+          apiBaseUrl={effectiveApiUrl} 
+          onError={(msg: string) => setError(msg)}
+        />
       </div>
-      {joke && <SmsSender joke={joke} />}
     </div>
-  )
+  );
 }
 
 export default App
