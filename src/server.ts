@@ -8,43 +8,20 @@ import OpenAI from 'openai';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// ES Module compatibility for __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// This works better with Railway's file structure
-const rootDir = process.env.NODE_ENV === 'production' 
-  ? path.resolve(__dirname, '../..') // In production on Railway  
-  : path.resolve(__dirname, '..'); // In development
-
-// Load environment variables from .env file if it exists
-// In Railway, these will be set through the dashboard
-try {
-  const envPath = process.env.NODE_ENV === 'production' 
-    ? path.join(__dirname, '../.env')
-    : path.join(rootDir, '.env');
-  
-  if (existsSync(envPath)) {
-    console.log(`Loading .env file from ${envPath}`);
-    dotenv.config({ path: envPath });
-  } else {
-    console.log(`No .env file found at ${envPath}, using environment variables`);
-    dotenv.config();
-  }
-} catch (error) {
-  console.warn('Error loading .env file:', error);
-  dotenv.config(); // Fallback to default behavior
-}
-
-// Ensure NODE_ENV is set
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+// Load environment variables
+console.log('Loading environment variables');
+dotenv.config();
 
 // Set environment mode
 const isDevelopment = process.env.NODE_ENV !== 'production';
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('isDevelopment:', isDevelopment);
-console.log('__dirname:', __dirname);
-console.log('rootDir:', rootDir);
+console.log('NODE_ENV:', process.env.NODE_ENV || 'not set');
+console.log('Running in', isDevelopment ? 'development' : 'production', 'mode');
+
+// ES Module compatibility for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
+console.log('Root directory:', rootDir);
 
 // Debug logging for environment variables
 console.log('Checking Twilio configuration...');
@@ -57,28 +34,12 @@ console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'Present' : 'Missing
 const app = express();
 app.use(express.json());
 
-// Configure CORS
-const corsOptions = isDevelopment 
-  ? {
-      // Development - restrict to localhost
-      origin: 'http://localhost:5174',
-      methods: ['GET', 'POST', 'OPTIONS'],
-      credentials: true,
-      optionsSuccessStatus: 204
-    }
-  : {
-      // Production - allow more origins
-      origin: '*',
-      methods: ['GET', 'POST', 'OPTIONS'],
-      optionsSuccessStatus: 204
-    };
-
-console.log('CORS configuration:', corsOptions);
-
-app.use(cors(corsOptions));
-
-// Add preflight response for OPTIONS requests
-app.options('*', cors(corsOptions));
+// Very simple CORS configuration
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  optionsSuccessStatus: 204
+}));
 
 // Log all incoming requests
 app.use((req, res, next) => {
@@ -89,45 +50,9 @@ app.use((req, res, next) => {
 // Serve static files from the dist directory (Vite output)
 if (!isDevelopment) {
   try {
-    // For Railway, the static files are in the dist directory at the same level as server.js
-    const clientDistPath = path.join(rootDir, 'dist');
-    const altClientDistPath = path.resolve(__dirname, '../dist');
-    
-    // Try multiple possible paths
-    const paths = [clientDistPath, altClientDistPath];
-    let foundDistPath = null;
-    
-    for (const distPath of paths) {
-      try {
-        const stats = await fs.stat(distPath);
-        if (stats.isDirectory()) {
-          console.log(`Found static files at: ${distPath}`);
-          foundDistPath = distPath;
-          break;
-        }
-      } catch (err) {
-        console.log(`No static files at: ${distPath}`);
-      }
-    }
-    
-    if (foundDistPath) {
-      // Serve static files
-      app.use(express.static(foundDistPath));
-      
-      // Catch-all route for SPA client-side routing
-      app.get(/^(?!\/?api).+/, (req, res) => {
-        try {
-          const indexPath = path.join(foundDistPath, 'index.html');
-          console.log(`Serving index.html at ${indexPath} for route: ${req.path}`);
-          res.sendFile(indexPath);
-        } catch (err) {
-          console.error('Error serving index.html:', err);
-          res.status(500).send('Error serving application');
-        }
-      });
-    } else {
-      console.log('No static file directory found');
-    }
+    const distPath = path.join(rootDir, 'dist');
+    console.log('Setting up static file serving from:', distPath);
+    app.use(express.static(distPath));
   } catch (error) {
     console.error('Error setting up static file serving:', error);
   }

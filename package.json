@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build:client": "tsc -b && vite build",
-    "build:server": "tsc -p tsconfig.server.json",
-    "build": "npm run build:client && npm run build:server && npm run copy-files",
+    "build:server": "echo 'Skipping server build'",
+    "build": "npm run build:client",
     "copy-files": "mkdir -p dist && cp .env dist/ || true",
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "tsx src/server.ts",
-    "start": "node dist/server.js"
+    "start": "tsx src/server.ts"
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
