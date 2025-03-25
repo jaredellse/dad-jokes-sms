@@ -1,12 +1,6 @@
-// Simple Express server for Railway deployment
+// Ultra-simple Express server for Railway deployment
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
-import OpenAI from 'openai';
-
-// Load environment variables
-dotenv.config();
-console.log('Starting server in mode:', process.env.NODE_ENV || 'not set');
 
 const app = express();
 app.use(express.json());
@@ -18,65 +12,32 @@ app.use((req, res, next) => {
   next();
 });
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Generate a dad joke using OpenAI
-async function generateDadJoke() {
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are a dad joke generator. Generate a funny, clean dad joke with a setup and punchline. Return ONLY a JSON object with format {\"setup\": \"joke setup\", \"punchline\": \"joke punchline\"}. No additional text or explanation."
-        },
-        {
-          role: "user",
-          content: "Generate a new dad joke"
-        }
-      ],
-      temperature: 0.7,
-    });
-
-    const content = response.choices[0]?.message?.content?.trim() || '';
-    
-    try {
-      const jokeObject = JSON.parse(content);
-      return {
-        setup: jokeObject.setup,
-        punchline: jokeObject.punchline
-      };
-    } catch (parseError) {
-      console.error('Failed to parse OpenAI response:', content);
-      return {
-        setup: "Why don't scientists trust atoms?",
-        punchline: "Because they make up everything!"
-      };
-    }
-  } catch (error) {
-    console.error('Error generating joke with OpenAI:', error);
-    return {
-      setup: "Why don't scientists trust atoms?",
-      punchline: "Because they make up everything!"
-    };
-  }
-}
+// Just provide static jokes - no OpenAI dependency
+const jokes = [
+  { setup: "I'm reading a book on anti-gravity.", punchline: "It's impossible to put down!" },
+  { setup: "What do you call a fish with no eyes?", punchline: "Fsh!" },
+  { setup: "Why did the developer go broke?", punchline: "Because they used up all their cache!" },
+  { setup: "Why don't scientists trust atoms?", punchline: "Because they make up everything!" },
+  { setup: "What do you call a factory that makes products that are just OK?", punchline: "A satisfactory!" },
+  { setup: "Why couldn't the bicycle stand up by itself?", punchline: "It was two tired!" },
+  { setup: "Did you hear about the mathematician who's afraid of negative numbers?", punchline: "He'll stop at nothing to avoid them!" },
+  { setup: "Why do we tell actors to 'break a leg?'", punchline: "Because every play has a cast!" },
+  { setup: "Helvetica and Times New Roman walk into a bar.", punchline: "The bartender says, 'We don't serve your type.'" },
+  { setup: "What did the janitor say when he jumped out of the closet?", punchline: "Supplies!" }
+];
 
 // API endpoint to generate jokes
-app.get('/api/generate-joke', async (_, res) => {
-  try {
-    const joke = await generateDadJoke();
-    res.json({ success: true, joke });
-  } catch (error) {
-    console.error('Error generating joke:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Failed to generate joke'
-    });
-  }
+app.get('/api/generate-joke', (_, res) => {
+  // Get a random joke
+  const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+  res.json({ success: true, joke: randomJoke });
+});
+
+// SMS webhook endpoint
+app.post('/api/sms-webhook', express.urlencoded({ extended: false }), (req, res) => {
+  console.log('Received SMS webhook:', req.body);
+  res.type('text/xml');
+  res.send('<Response></Response>');
 });
 
 // Health check endpoint
@@ -99,7 +60,7 @@ app.get('/', (_, res) => {
         <p>This is the API server for Dad Jokes SMS service.</p>
         <p>Available endpoints:</p>
         <ul>
-          <li><a href="/api/generate-joke">/api/generate-joke</a> - Generate a new dad joke</li>
+          <li><a href="/api/generate-joke">/api/generate-joke</a> - Generate a dad joke</li>
           <li><a href="/api/health">/api/health</a> - Server health check</li>
         </ul>
       </body>
