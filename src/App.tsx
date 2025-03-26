@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import { jokes } from './jokes'
 
-// Get the API base URL from environment variables
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-console.log('Initially configured API URL:', apiBaseUrl);
+// Get the API base URL from environment variables or use a default
+const API_URL = import.meta.env.MODE === 'development' 
+  ? 'http://localhost:3001'
+  : 'https://dad-jokes-sms.onrender.com';
+
+console.log('Using API URL:', API_URL);
 
 // Family-friendly dad jokes array
 const sophisticatedJokes = [
@@ -131,204 +135,84 @@ async function testApiConnection(url: string): Promise<boolean> {
   }
 }
 
-function App() {
-  const [joke, setJoke] = useState<string>('');
-  const [currentJokeIndex, setCurrentJokeIndex] = useState<number>(-1);
+interface JokeResponse {
+  success: boolean;
+  joke: string;
+  isPreStored?: boolean;
+  wasError?: boolean;
+  error?: string;
+  timestamp: number;
+}
+
+const App = () => {
+  const [currentJoke, setCurrentJoke] = useState<{ setup: string; punchline: string } | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [effectiveApiUrl, setEffectiveApiUrl] = useState<string>(apiBaseUrl);
-  const [isCheckingApi, setIsCheckingApi] = useState<boolean>(true);
   const [copySuccess, setCopySuccess] = useState<string>('');
-  
-  // Function to copy text to clipboard
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopySuccess('Copied!');
-      setTimeout(() => setCopySuccess(''), 2000);
-    } catch (err) {
-      console.error('Failed to copy text:', err);
-      setCopySuccess('Failed to copy');
-    }
-  };
 
-  // Test API connection on initial load
-  useEffect(() => {
-    async function checkApiConnectivity() {
-      setIsCheckingApi(true);
-      try {
-        // Show a random joke immediately while checking API
-        getRandomJoke();
-
-        // Try the configured URL first
-        if (apiBaseUrl) {
-          if (await testApiConnection(apiBaseUrl)) {
-            setEffectiveApiUrl(apiBaseUrl);
-            setIsCheckingApi(false);
-            return;
-          }
-        }
-        
-        // Try Railway production URL as fallback
-        const railwayUrl = 'https://dad-jokes-sms-production.up.railway.app';
-        if (await testApiConnection(railwayUrl)) {
-          setEffectiveApiUrl(railwayUrl);
-          setIsCheckingApi(false);
-          return;
-        }
-        
-        // Fall back to localhost for development
-        if (import.meta.env.MODE === 'development') {
-          const localUrl = 'http://localhost:3001';
-          if (await testApiConnection(localUrl)) {
-            setEffectiveApiUrl(localUrl);
-            setIsCheckingApi(false);
-            return;
-          }
-        }
-        
-        // No working API found, will use fallback jokes
-        console.warn('No working API found, using client-side jokes only');
-        setEffectiveApiUrl('');
-      } catch (error) {
-        console.error('Error checking API connectivity:', error);
-        setEffectiveApiUrl('');
-      } finally {
-        setIsCheckingApi(false);
-      }
-    }
-    
-    checkApiConnectivity();
-  }, []);
-
-  const getRandomJoke = () => {
-    const newIndex = Math.floor(Math.random() * sophisticatedJokes.length);
-    setCurrentJokeIndex(newIndex);
-    const selectedJoke = sophisticatedJokes[newIndex];
-    setJoke(`${selectedJoke.question}\n${selectedJoke.punchline}`);
-    return `${selectedJoke.question}\n${selectedJoke.punchline}`;
-  };
-
-  const generateAIJoke = async () => {
-    // Don't proceed if we're still checking API availability
-    if (isCheckingApi) {
-      console.log('Still checking API availability, please wait...');
-      return;
-    }
-
+  const generateJoke = async () => {
     setLoading(true);
-    setError(null);
-    
-    // If no API is available, just show a random joke
-    if (!effectiveApiUrl) {
-      console.log('No API URL available, using local jokes');
-      getRandomJoke();
-      setLoading(false);
-      return;
-    }
-    
     try {
-      // Create AbortController for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-      console.log('Environment:', import.meta.env.MODE);
-      console.log('Using API URL:', effectiveApiUrl);
-      
-      // Add timestamp to prevent caching and ensure unique jokes
-      const timestamp = Date.now();
-      const apiUrl = `${effectiveApiUrl}/api/generate-joke?t=${timestamp}`;
-      console.log('Full API URL:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-        mode: 'cors',
-        cache: 'no-cache',
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success && data.joke) {
-        setCurrentJokeIndex(-1); // Mark as AI joke
-        setJoke(`${data.joke.setup}\n${data.joke.punchline}`);
-      } else if (data.error) {
-        throw new Error(data.error);
-      }
-    } catch (error: unknown) {
-      console.error('Error fetching joke:', error);
-      if (error instanceof Error && error.name === 'AbortError') {
-        setError('Request timed out. Using a random joke instead!');
-        getRandomJoke(); // Show a random joke on timeout
-      } else {
-        setError(handleApiError(error));
-        getRandomJoke(); // Show a random joke on error
-      }
+      const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+      setCurrentJoke(randomJoke);
+    } catch (err) {
+      console.error('Error:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  const copyJokeToClipboard = async () => {
+    if (!currentJoke) return;
+    
+    try {
+      const jokeText = `${currentJoke.setup}\n${currentJoke.punchline}`;
+      await navigator.clipboard.writeText(jokeText);
+      setCopySuccess('Copied!');
+      setTimeout(() => setCopySuccess(''), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      setCopySuccess('Failed to copy');
+    }
+  };
+
+  useEffect(() => {
+    generateJoke();
+  }, []);
+
   return (
     <div className="app-container">
+      <h1>Dad Jokes</h1>
+      <p className="subtitle">Because someone has to keep the puns alive.</p>
+
       <div className="content">
-        <h1>Dad Jokes</h1>
-        <p>Generate dad jokes with AI!</p>
-        
-        <div className="joke-section">
-          <div className="joke-container">
-            {isCheckingApi ? (
-              <p className="loading-text">Loading...</p>
-            ) : joke ? (
-              <>
-                <div className="joke-content">
-                  {joke.split('\n').map((line, index) => (
-                    <p key={index} className={index === 0 ? "joke-setup" : "joke-punchline"}>
-                      {line}
-                    </p>
-                  ))}
-                  <button 
-                    className="copy-button"
-                    onClick={() => copyToClipboard(joke)}
-                    title="Copy joke to clipboard"
-                  >
-                    📋 Copy Joke
-                  </button>
-                  {copySuccess && <span className="copy-feedback">{copySuccess}</span>}
-                </div>
-                <p className="joke-source">
-                  {currentJokeIndex === -1 ? 
-                    "🤖 AI-Generated Joke" : 
-                    "📚 Pre-stored Joke"}
-                </p>
-                {loading && <p className="loading-text">Loading new joke...</p>}
-              </>
-            ) : (
-              <p className="joke-text">Click the button to generate a joke!</p>
-            )}
-            {error && <p className="error-text">{error}</p>}
-          </div>
-          
-          <button 
-            onClick={generateAIJoke} 
-            disabled={loading || isCheckingApi}
-            className={loading ? 'loading' : ''}
-          >
-            {loading ? 'Generating...' : 'Next Pun'}
-          </button>
-        </div>
+        {currentJoke ? (
+          <>
+            <div className="joke-container">
+              <p className="setup">{currentJoke.setup}</p>
+              <p className="punchline">{currentJoke.punchline.replace(/[!]+$/, '')}</p>
+            </div>
+            <button 
+              onClick={copyJokeToClipboard} 
+              className="copy-button"
+              title="Copy joke to clipboard"
+            >
+              📋 Copy
+            </button>
+            {copySuccess && <div className="copy-success">{copySuccess}</div>}
+          </>
+        ) : (
+          <p className="loading-text">Click the button to see a joke!</p>
+        )}
+      </div>
+      
+      <div className="button-container">
+        <button 
+          onClick={generateJoke} 
+          disabled={loading}
+          className="next-pun"
+        >
+          Next Pun
+        </button>
       </div>
     </div>
   );

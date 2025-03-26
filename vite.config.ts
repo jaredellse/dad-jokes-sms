@@ -13,12 +13,21 @@ export default defineConfig({
   },
   server: {
     port: 5174,
-    strictPort: true,
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
-        changeOrigin: true
+        changeOrigin: true,
+        secure: false,
+      },
+      '/ws': {
+        target: 'ws://localhost:3001',
+        ws: true,
       }
+    },
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+      port: 5174
     }
   }
 })
