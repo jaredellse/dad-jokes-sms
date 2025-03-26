@@ -231,12 +231,19 @@ function App() {
       console.log('Environment:', import.meta.env.MODE);
       console.log('Using API URL:', effectiveApiUrl);
       
-      const apiUrl = `${effectiveApiUrl}/api/generate-joke`;
+      // Add timestamp to prevent caching and ensure unique jokes
+      const timestamp = Date.now();
+      const apiUrl = `${effectiveApiUrl}/api/generate-joke?t=${timestamp}`;
       console.log('Full API URL:', apiUrl);
       
       const response = await fetch(apiUrl, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' },
+        headers: { 
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
         mode: 'cors',
         cache: 'no-cache',
         signal: controller.signal
@@ -300,7 +307,7 @@ function App() {
             disabled={loading || isCheckingApi}
             className={loading ? 'loading' : ''}
           >
-            {loading ? 'Generating...' : 'Generate AI Joke'}
+            {loading ? 'Generating...' : 'Next Pun'}
           </button>
         </div>
       </div>
