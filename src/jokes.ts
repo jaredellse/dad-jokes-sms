@@ -1,282 +1,288 @@
-export const jokes = [
+export interface Joke {
+  id: string;
+  setup: string;
+  punchline: string;
+}
+
+export const jokes: Joke[] = [
   {
-    id: '1',
-    setup: "What do tennis players do when they get angry?",
-    punchline: "They raise a racquet!"
-  },
-  {
-    id: '2',
-    setup: "What kind of music do planets listen to?",
-    punchline: "Nep-tunes!"
-  },
-  {
-    id: '3',
-    setup: "Why did the piano player get arrested?",
-    punchline: "Because he got caught playing in treble!"
-  },
-  {
-    id: '4',
-    setup: "What do you call a musical dinosaur?",
-    punchline: "A tyranno-chorus rex!"
-  },
-  {
-    id: '5',
-    setup: "Why did the drummer bring a ladder to band practice?",
-    punchline: "To reach the high notes!"
-  },
-  {
-    id: '6',
-    setup: "What do you call a guitar that sneezes?",
-    punchline: "A-chordian!"
-  },
-  {
-    id: '7',
-    setup: "Why was the computer cold?",
-    punchline: "It left its Windows open!"
-  },
-  {
-    id: '8',
-    setup: "What did the computer do at lunchtime?",
-    punchline: "Had a byte!"
-  },
-  {
-    id: '9',
+    id: "1",
     setup: "Why don't programmers like nature?",
-    punchline: "It has too many bugs!"
+    punchline: "It has too many bugs."
   },
   {
-    id: '10',
-    setup: "What do you call a computer that sings?",
-    punchline: "A Dell-a-cappella!"
-  },
-  {
-    id: '11',
-    setup: "Why did the smartphone go to the doctor?",
-    punchline: "Because it had too many viruses!"
-  },
-  {
-    id: '12',
-    setup: "What do you call a teacher who loves to dance?",
-    punchline: "A lesson planner!"
-  },
-  {
-    id: '13',
-    setup: "Why did the student eat his homework?",
-    punchline: "Because the teacher said it was a piece of cake!"
-  },
-  {
-    id: '14',
-    setup: "What do you call a pencil that's been sharpened too much?",
-    punchline: "Pointless!"
-  },
-  {
-    id: '15',
-    setup: "Why did the math book look sad?",
-    punchline: "Because it had too many problems!"
-  },
-  {
-    id: '16',
-    setup: "What do you call a sleeping bull?",
-    punchline: "A bulldozer!"
-  },
-  {
-    id: '17',
-    setup: "What did Mars say to Saturn?",
-    punchline: "Give me a ring sometime!"
-  },
-  {
-    id: '18',
-    setup: "Why did the sun go to school?",
-    punchline: "To get brighter!"
-  },
-  {
-    id: '19',
-    setup: "What do you call a bear in space?",
-    punchline: "A constella-bear!"
-  },
-  {
-    id: '20',
-    setup: "Why did the astronaut break up with his girlfriend?",
-    punchline: "He needed space!"
-  },
-  {
-    id: '21',
-    setup: "What do you call a moon that's not feeling well?",
-    punchline: "A lunar-tic!"
-  },
-  {
-    id: '22',
-    setup: "Why did the bicycle fall over?",
-    punchline: "Because it was two-tired!"
-  },
-  {
-    id: '23',
-    setup: "What do you call a train that sneezes?",
-    punchline: "A-choo-choo train!"
-  },
-  {
-    id: '24',
-    setup: "Why did the airplane go to the doctor?",
-    punchline: "Because it had jet lag!"
-  },
-  {
-    id: '25',
-    setup: "What do you call a car that's not working?",
-    punchline: "A car-astrophe!"
-  },
-  {
-    id: '26',
-    setup: "Why did the bus driver go to the bank?",
-    punchline: "To get his route-ine!"
-  },
-  {
-    id: '27',
-    setup: "What did the flower say to the bee?",
-    punchline: "Buzz off!"
-  },
-  {
-    id: '28',
-    setup: "Why did the gardener plant a light bulb?",
-    punchline: "He wanted to grow a power plant!"
-  },
-  {
-    id: '29',
-    setup: "What do you call a tree that's afraid of heights?",
-    punchline: "A scaredy-pine!"
-  },
-  {
-    id: '30',
-    setup: "Why did the cactus go to the doctor?",
-    punchline: "Because it was feeling prickly!"
-  },
-  {
-    id: '31',
-    setup: "What do you call a flower that's been in the sun too long?",
-    punchline: "A sun-burned rose!"
-  },
-  {
-    id: '32',
-    setup: "What did the ocean say to the shore?",
-    punchline: "Nothing, it just waved!"
-  },
-  {
-    id: '33',
-    setup: "Why did the fish go to the bank?",
-    punchline: "To get his loan shark!"
-  },
-  {
-    id: '34',
-    setup: "What do you call a fish that wears a bowtie?",
-    punchline: "So-fish-ticated!"
-  },
-  {
-    id: '35',
-    setup: "Why did the crab never share?",
-    punchline: "Because he was a little shellfish!"
-  },
-  {
-    id: '36',
-    setup: "What do you call a fish that's afraid of water?",
-    punchline: "A scaredy-fish!"
-  },
-  {
-    id: '37',
+    id: "2",
     setup: "What do you call a bear with no teeth?",
-    punchline: "A gummy bear!"
+    punchline: "A gummy bear."
   },
   {
-    id: '38',
-    setup: "What do you call a pile of cats?",
-    punchline: "A Meowtain!"
+    id: "3",
+    setup: "Why did the scarecrow win an award?",
+    punchline: "He was outstanding in his field."
   },
   {
-    id: '39',
+    id: "4",
     setup: "What do you call a fake noodle?",
-    punchline: "An impasta!"
+    punchline: "An impasta."
   },
   {
-    id: '40',
-    setup: "What do you call a dog that can do magic tricks?",
-    punchline: "A labracadabrador!"
+    id: "5",
+    setup: "Why did the math book look sad?",
+    punchline: "Because it had too many problems."
   },
   {
-    id: '41',
+    id: "6",
+    setup: "What do you call a bear that's good at math?",
+    punchline: "A cub-ic equation."
+  },
+  {
+    id: "7",
+    setup: "Why don't eggs tell jokes?",
+    punchline: "They'd crack up."
+  },
+  {
+    id: "8",
+    setup: "What do you call a bear that's good at cooking?",
+    punchline: "A chef-icient."
+  },
+  {
+    id: "9",
+    setup: "Why did the coffee file a police report?",
+    punchline: "It got mugged."
+  },
+  {
+    id: "10",
+    setup: "What do you call a bear that's good at music?",
+    punchline: "A hum-azing."
+  },
+  {
+    id: "11",
+    setup: "What do you call someone with no nose?",
+    punchline: "Nobody knows."
+  },
+  {
+    id: "12",
+    setup: "Why can't your nose be 12 inches long?",
+    punchline: "Because then it'd be a foot."
+  },
+  {
+    id: "13",
+    setup: "What do you call a sheep with no legs?",
+    punchline: "A cloud."
+  },
+  {
+    id: "14",
+    setup: "What did the 0 say to the 8?",
+    punchline: "Nice belt."
+  },
+  {
+    id: "15",
+    setup: "Why don't skeletons ride roller coasters?",
+    punchline: "They don't have the stomach for it."
+  },
+  {
+    id: "16",
+    setup: "What do you call a pig that knows karate?",
+    punchline: "A pork chop."
+  },
+  {
+    id: "17",
+    setup: "Why does Norway have barcodes on their battleships?",
+    punchline: "So when they get back to port, they can Scandinavian."
+  },
+  {
+    id: "18",
+    setup: "Did you hear about the cow who jumped over the barbed wire fence?",
+    punchline: "It was udder destruction."
+  },
+  {
+    id: "19",
+    setup: "What did one wall say to the other wall?",
+    punchline: "I'll meet you at the corner."
+  },
+  {
+    id: "20",
+    setup: "Why did the belt go to prison?",
+    punchline: "He held up a pair of pants."
+  },
+  {
+    id: "21",
+    setup: "Ever wondered why bees hum?",
+    punchline: "It's because they don't know the words."
+  },
+  {
+    id: "22",
+    setup: "What did the pirate say on his 80th birthday?",
+    punchline: "Aye Matey."
+  },
+  {
+    id: "23",
+    setup: "What did Yoda say when he saw himself in 4K?",
+    punchline: "HDMI."
+  },
+  {
+    id: "24",
+    setup: "Why did the opera singer go sailing?",
+    punchline: "They wanted to hit the high Cs."
+  },
+  {
+    id: "25",
+    setup: "Why did the burglar hang his mugshot on the wall?",
+    punchline: "To prove that he was framed."
+  },
+  {
+    id: "26",
+    setup: "What do birds give out on Halloween?",
+    punchline: "Tweets."
+  },
+  {
+    id: "27",
+    setup: "Where does Batman go to the bathroom?",
+    punchline: "The batroom."
+  },
+  {
+    id: "28",
     setup: "What do you call a group of disorganized cats?",
-    punchline: "A cat-tastrophe!"
+    punchline: "A cat-tastrophe."
   },
   {
-    id: '42',
-    setup: "What do you call a group of musical whales?",
-    punchline: "An Orca-stra!"
+    id: "29",
+    setup: "Why did the barber win the race?",
+    punchline: "He took a short cut."
   },
   {
-    id: '43',
-    setup: "What did the buffalo say to his son when he left for college?",
-    punchline: "Bison!"
+    id: "30",
+    setup: "What did the sea say to the sand?",
+    punchline: "We have to stop meeting like this."
   },
   {
-    id: '44',
-    setup: "What did the grape do when he got stepped on?",
-    punchline: "He let out a little wine!"
+    id: "31",
+    setup: "What do you get when you cross a chicken with a skunk?",
+    punchline: "A fowl smell."
   },
   {
-    id: '45',
-    setup: "What did the hat say to the scarf?",
-    punchline: "You hang around, I'll go on ahead!"
+    id: "32",
+    setup: "Why don't sharks eat clowns?",
+    punchline: "Because they taste funny."
   },
   {
-    id: '46',
-    setup: "What did the left eye say to the right eye?",
-    punchline: "Between us, something smells!"
+    id: "33",
+    setup: "What do you call a boy who stopped digging holes?",
+    punchline: "Douglas."
   },
   {
-    id: '47',
+    id: "34",
     setup: "What did the ocean say to the beach?",
-    punchline: "Thanks for all the sediment!"
+    punchline: "Thanks for all the sediment."
   },
   {
-    id: '48',
-    setup: "What did the piece of bread say to the knife?",
-    punchline: "Butter me up!"
+    id: "35",
+    setup: "What's black and white and read all over?",
+    punchline: "The newspaper."
   },
   {
-    id: '49',
-    setup: "What did the shy pebble wish for?",
-    punchline: "That she was a little boulder!"
+    id: "36",
+    setup: "How do you teach a kid to climb stairs?",
+    punchline: "There is a step by step guide."
   },
   {
-    id: '50',
-    setup: "What do you call a careful wolf?",
-    punchline: "Aware wolf!"
+    id: "37",
+    setup: "Why are pirates called pirates?",
+    punchline: "Because they arrr."
   },
   {
-    id: '1313',
-    setup: "What do you call a bear that's good at squash?",
-    punchline: "A racquet-igrade"
+    id: "38",
+    setup: "What do you call an Argentinian with a rubber toe?",
+    punchline: "Roberto."
   },
   {
-    id: '1323',
-    setup: "What do you call a bear that's good at table tennis?",
-    punchline: "A ping-pong-da"
+    id: "39",
+    setup: "Want to hear a chimney joke?",
+    punchline: "Got stacks of em! First one's on the house."
   },
   {
-    id: '1343',
-    setup: "What do you call a bear that's good at handball?",
-    punchline: "A palm-ar bear"
+    id: "40",
+    setup: "What do you give a sick lemon?",
+    punchline: "Lemonaid."
   },
   {
-    id: '1353',
-    setup: "What do you call a bear that's good at curling?",
-    punchline: "A sweep-igrade"
+    id: "41",
+    setup: "What happens when you cross a sheep with a kangaroo?",
+    punchline: "A woolly jumper."
   },
   {
-    id: '1358',
-    setup: "What do you call a bear that's good at water polo?",
-    punchline: "A pool-ar bear"
+    id: "42",
+    setup: "Why did the cowboy have a weiner dog?",
+    punchline: "Somebody told him to get a long little doggy."
   },
   {
-    id: '1363',
-    setup: "What do you call a bear that's good at field hockey?",
-    punchline: "A stick-igrade"
+    id: "43",
+    setup: "Why are basketball players messy eaters?",
+    punchline: "Because they are always dribbling."
+  },
+  {
+    id: "44",
+    setup: "What is the best way to carve?",
+    punchline: "Whittle by whittle."
+  },
+  {
+    id: "45",
+    setup: "Why was the strawberry sad?",
+    punchline: "Its parents were in a jam."
+  },
+  {
+    id: "46",
+    setup: "What do you call an old snowman?",
+    punchline: "Water."
+  },
+  {
+    id: "47",
+    setup: "Did you hear about the two thieves who stole a calendar?",
+    punchline: "They each got six months."
+  },
+  {
+    id: "48",
+    setup: "Why do birds fly south for the winter?",
+    punchline: "Because it's too far to walk."
+  },
+  {
+    id: "49",
+    setup: "How do you make a hankie dance?",
+    punchline: "Put a little boogie in it."
+  },
+  {
+    id: "50",
+    setup: "What do you call a bear that's good at painting?",
+    punchline: "A picasso bear."
+  },
+  {
+    id: "51",
+    setup: "Why did the computer go to the doctor?",
+    punchline: "It had a virus."
+  },
+  {
+    id: "52",
+    setup: "Why did the cookie go to the doctor?",
+    punchline: "It was feeling crumbly."
+  },
+  {
+    id: "53",
+    setup: "Why did the tomato turn red?",
+    punchline: "Because it saw the salad dressing."
+  },
+  {
+    id: "54",
+    setup: "Why did the golfer bring two pairs of pants?",
+    punchline: "In case he got a hole in one."
+  },
+  {
+    id: "55",
+    setup: "Why did the scarecrow become a successful politician?",
+    punchline: "He was outstanding in his field."
+  },
+  {
+    id: "56",
+    setup: "Why did the bicycle fall over?",
+    punchline: "It was two-tired."
   }
 ];

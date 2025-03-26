@@ -245,6 +245,10 @@ h1 {
     top: 2.25rem;
     right: 1rem;
   }
+
+  .logo {
+    width: 150px;
+  }
 }
 
 @media (min-width: 641px) {
@@ -317,4 +321,17 @@ h1 {
 .pre-stored-label::before {
   content: '🌟';
   margin-right: 0.5rem;
+}
+
+.header {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo {
+  width: 200px;
+  height: auto;
+  margin: 1rem 0;
 }

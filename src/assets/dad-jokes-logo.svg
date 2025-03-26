@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="500" height="600" viewBox="0 0 500 600" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <g>
+        <!-- Face -->
+        <path d="M250 100 C 350 100, 400 200, 400 300 C 400 400, 350 500, 250 500 C 150 500, 100 400, 100 300 C 100 200, 150 100, 250 100" fill="#1a202c"/>
+        <!-- Sunglasses -->
+        <path d="M150 250 L 350 250" stroke="#1a202c" stroke-width="20"/>
+        <rect x="150" y="220" width="80" height="60" rx="10" fill="#1a202c"/>
+        <rect x="270" y="220" width="80" height="60" rx="10" fill="#1a202c"/>
+        <!-- Mustache -->
+        <path d="M200 350 C 250 370, 300 350, 350 350" stroke="#1a202c" stroke-width="15" fill="none"/>
+        <!-- Text -->
+        <text x="250" y="550" font-family="Arial Black" font-size="72" text-anchor="middle" fill="#1a202c">DAD JOKES</text>
+    </g>
+</svg> 
