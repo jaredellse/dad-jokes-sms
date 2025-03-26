@@ -110,15 +110,21 @@ const handleApiError = (error: any) => {
   }
 };
 
-// Function to test if an API endpoint is reachable
+// Function to test if an API endpoint is reachable with timeout
 async function testApiConnection(url: string): Promise<boolean> {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
     const response = await fetch(`${url}/api/generate-joke`, {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
       mode: 'cors',
       cache: 'no-cache',
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
     return response.ok;
   } catch (err) {
     console.error(`Connection test failed for ${url}:`, err);
@@ -189,11 +195,13 @@ function App() {
     }
     
     try {
-      // Show debug information
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
       console.log('Environment:', import.meta.env.MODE);
       console.log('Using API URL:', effectiveApiUrl);
       
-      // Determine API base URL
       const apiUrl = `${effectiveApiUrl}/api/generate-joke`;
       console.log('Full API URL:', apiUrl);
       
@@ -202,7 +210,10 @@ function App() {
         headers: { 'Accept': 'application/json' },
         mode: 'cors',
         cache: 'no-cache',
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -210,13 +221,18 @@ function App() {
 
       const data = await response.json();
       if (data.success && data.joke) {
+        setCurrentJokeIndex(-1); // Mark as AI joke
         setJoke(`${data.joke.setup} ${data.joke.punchline}`);
       } else if (data.error) {
         throw new Error(data.error);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching joke:', error);
-      setError(handleApiError(error));
+      if (error instanceof Error && error.name === 'AbortError') {
+        setError('Request timed out. Using a random joke instead!');
+      } else {
+        setError(handleApiError(error));
+      }
       // Keep the random joke displayed if there's an error
     } finally {
       setLoading(false);
