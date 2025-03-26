@@ -1,37 +1,44 @@
-# Dad Jokes SMS
+# Dad Jokes App
 
-A simple service that generates dad jokes and sends them via SMS using Twilio.
+A simple React app that displays random dad jokes. Built with React, TypeScript, and Vite.
 
-## Quick Deploy
+## Features
 
-### Deploy to Render (Recommended)
-
-For the fastest and most reliable deployment:
-
-1. Create a free account at [render.com](https://render.com)
-2. Click this button to deploy directly to Render:
-   [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/jaredellse/dad-jokes-sms)
-3. Once deployed, your API will be available at:
-   - https://dad-jokes-sms-api.onrender.com/api/generate-joke
-   - https://dad-jokes-sms-api.onrender.com/api/health
-   - https://dad-jokes-sms-api.onrender.com/api/sms-webhook (for Twilio)
-
-4. Add these webhook URLs to your Twilio configuration.
-
-## API Endpoints
-
-- `GET /api/generate-joke` - Generates a random dad joke
-- `POST /api/sms-webhook` - Webhook for Twilio SMS (STOP/START commands)
-- `GET /api/health` - Health check endpoint
+- Display random dad jokes
+- Copy jokes to clipboard
+- Clean, modern UI
+- No external API dependencies - all jokes are stored locally
 
 ## Development
 
+1. Clone the repository:
+```bash
+git clone https://github.com/your-username/dad-jokes-sms.git
+cd dad-jokes-sms
 ```
+
+2. Install dependencies:
+```bash
 npm install
-npm run dev        # Run frontend development server
-npm run server:dev # Run backend development server
 ```
 
-## License
+3. Start the development server:
+```bash
+npm run dev
+```
 
-MIT License
+4. Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
+
+## Building for Production
+
+To create a production build:
+
+```bash
+npm run build
+```
+
+The build files will be in the `dist` directory.
+
+## Contributing
+
+Feel free to submit issues and enhancement requests!
