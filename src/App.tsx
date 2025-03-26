@@ -113,7 +113,7 @@ const handleApiError = (error: any) => {
 async function testApiConnection(url: string): Promise<boolean> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // Increased timeout for initial load
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced timeout for faster initial load
 
     const response = await fetch(`${url}/api/generate-joke`, {
       method: 'GET',
@@ -157,11 +157,12 @@ function App() {
     async function checkApiConnectivity() {
       setIsCheckingApi(true);
       try {
-        // First try the configured URL
+        // Show a random joke immediately while checking API
+        getRandomJoke();
+
+        // Try the configured URL first
         if (apiBaseUrl) {
-          console.log('Trying configured API URL:', apiBaseUrl);
           if (await testApiConnection(apiBaseUrl)) {
-            console.log('Using configured API URL:', apiBaseUrl);
             setEffectiveApiUrl(apiBaseUrl);
             setIsCheckingApi(false);
             return;
@@ -170,9 +171,7 @@ function App() {
         
         // Try Railway production URL as fallback
         const railwayUrl = 'https://dad-jokes-sms-production.up.railway.app';
-        console.log('Trying Railway URL:', railwayUrl);
         if (await testApiConnection(railwayUrl)) {
-          console.log('Using Railway URL:', railwayUrl);
           setEffectiveApiUrl(railwayUrl);
           setIsCheckingApi(false);
           return;
@@ -181,9 +180,7 @@ function App() {
         // Fall back to localhost for development
         if (import.meta.env.MODE === 'development') {
           const localUrl = 'http://localhost:3001';
-          console.log('Trying localhost URL:', localUrl);
           if (await testApiConnection(localUrl)) {
-            console.log('Using localhost URL:', localUrl);
             setEffectiveApiUrl(localUrl);
             setIsCheckingApi(false);
             return;
@@ -204,18 +201,12 @@ function App() {
     checkApiConnectivity();
   }, []);
 
-  // Load initial joke after API check is complete
-  useEffect(() => {
-    if (!isCheckingApi) {
-      getRandomJoke();
-    }
-  }, [isCheckingApi]);
-
   const getRandomJoke = () => {
     const newIndex = Math.floor(Math.random() * sophisticatedJokes.length);
     setCurrentJokeIndex(newIndex);
     const selectedJoke = sophisticatedJokes[newIndex];
     setJoke(`${selectedJoke.question}\n${selectedJoke.punchline}`);
+    return `${selectedJoke.question}\n${selectedJoke.punchline}`;
   };
 
   const generateAIJoke = async () => {
@@ -251,7 +242,7 @@ function App() {
       
       const response = await fetch(apiUrl, {
         method: 'GET',
-        headers: { 
+        headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
@@ -269,6 +260,7 @@ function App() {
       }
 
       const data = await response.json();
+      
       if (data.success && data.joke) {
         setCurrentJokeIndex(-1); // Mark as AI joke
         setJoke(`${data.joke.setup}\n${data.joke.punchline}`);

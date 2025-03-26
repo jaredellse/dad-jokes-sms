@@ -164,18 +164,37 @@ function getRandomJokeParams(): { category: string, theme: string, style: string
     "history", "geography", "cooking", "baking", "vegetables", "fruits",
     "programming", "coding", "gaming", "movies", "television", "radio",
     "photography", "painting", "dancing", "singing", "instruments", "theater",
-    "camping", "hiking", "swimming", "running", "cycling", "yoga", "meditation"
+    "camping", "hiking", "swimming", "running", "cycling", "yoga", "meditation",
+    "cars", "trains", "planes", "bikes", "boats", "submarines", "rockets",
+    "robots", "aliens", "dinosaurs", "dragons", "unicorns", "mermaids",
+    "superheroes", "wizards", "pirates", "ninjas", "cowboys", "astronauts",
+    "chefs", "doctors", "teachers", "police", "firefighters", "construction",
+    "farming", "fishing", "hunting", "shopping", "cleaning", "repairing",
+    "painting", "drawing", "sculpting", "photography", "filmmaking", "animation",
+    "magic", "circus", "carnival", "amusement park", "zoo", "aquarium",
+    "library", "museum", "school", "university", "laboratory", "workshop",
+    "kitchen", "bathroom", "bedroom", "living room", "garage", "basement",
+    "garden", "park", "beach", "mountain", "forest", "desert"
   ];
 
   const themes = [
     "wordplay", "puns", "situational", "observational", "comparison", "contrast",
     "absurdist", "reversal", "misdirection", "cultural", "educational", "seasonal",
-    "metaphorical", "literal", "exaggeration", "understatement"
+    "metaphorical", "literal", "exaggeration", "understatement", "irony",
+    "sarcasm", "satire", "parody", "riddle", "ridiculous", "unexpected",
+    "surreal", "nonsensical", "logical", "illogical", "mathematical",
+    "scientific", "historical", "futuristic", "nostalgic", "contemporary",
+    "universal", "personal", "social", "political", "environmental",
+    "technological", "philosophical", "psychological", "emotional", "physical"
   ];
 
   const styles = [
     "classic", "modern", "silly", "clever", "nerdy", "witty", "playful",
-    "unexpected", "wholesome", "goofy", "smart", "quirky"
+    "unexpected", "wholesome", "goofy", "smart", "quirky", "sophisticated",
+    "simple", "complex", "abstract", "concrete", "formal", "casual",
+    "professional", "amateur", "traditional", "innovative", "experimental",
+    "conservative", "radical", "serious", "humorous", "satirical", "sarcastic",
+    "ironic", "sincere", "absurd", "realistic", "fantastical", "surreal"
   ];
 
   return {
@@ -188,7 +207,7 @@ function getRandomJokeParams(): { category: string, theme: string, style: string
 // Function to generate a dad joke using OpenAI with timeout
 async function generateDadJoke(): Promise<{ setup: string, punchline: string }> {
   try {
-    // Create a promise that rejects after 8 seconds (increased timeout for more creative generation)
+    // Create a promise that rejects after 8 seconds
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('OpenAI request timed out')), 8000);
     });
@@ -196,6 +215,7 @@ async function generateDadJoke(): Promise<{ setup: string, punchline: string }> 
     // Get random elements to make the joke more unique
     const { category, theme, style } = getRandomJokeParams();
     const timestamp = Date.now();
+    const randomSeed = Math.floor(Math.random() * 1000); // Add random seed for more variety
 
     // Create the OpenAI request promise with increased randomness
     const openAiPromise = openai.chat.completions.create({
@@ -214,11 +234,15 @@ async function generateDadJoke(): Promise<{ setup: string, punchline: string }> 
 8. Use creative wordplay that combines multiple meanings
 9. Incorporate specific terminology from the ${category} field
 10. Make the connection between setup and punchline non-obvious but satisfying
-11. Do not explain the joke or add any other text`
+11. Do not explain the joke or add any other text
+12. Use the random seed ${randomSeed} to ensure uniqueness
+13. Consider the current timestamp ${timestamp} when generating the joke
+14. Avoid any jokes that might be offensive or inappropriate
+15. Make the joke accessible to a general audience while maintaining cleverness`
         },
         {
           role: "user",
-          content: `Generate a completely unique ${style} dad joke about ${category} using ${theme} humor. Make it unlike any joke that exists. Current time: ${timestamp}`
+          content: `Generate a completely unique ${style} dad joke about ${category} using ${theme} humor. Make it unlike any joke that exists. Current time: ${timestamp}, Random seed: ${randomSeed}`
         }
       ],
       temperature: 1.0,
@@ -276,16 +300,43 @@ async function generateDadJoke(): Promise<{ setup: string, punchline: string }> 
 // Add endpoint to generate a new dad joke
 app.get('/api/generate-joke', async (_: Request, res: Response) => {
   try {
+    // Set appropriate headers for mobile
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    // Generate the joke with a shorter timeout for mobile
     const joke = await generateDadJoke();
-    res.json({ success: true, joke });
+    
+    // Add a timestamp to prevent caching
+    const response = {
+      success: true,
+      joke,
+      timestamp: Date.now()
+    };
+    
+    res.json(response);
   } catch (error) {
     console.error('Error in joke endpoint:', error);
-    // Even if there's an error, return a fallback joke
-    res.json({ 
-      success: true, 
-      joke: getRandomFallbackJoke(),
-      wasError: true
-    });
+    
+    // Try to generate a fallback joke with a different category
+    try {
+      const fallbackJoke = await generateDadJoke();
+      res.json({ 
+        success: true, 
+        joke: fallbackJoke,
+        wasError: true,
+        timestamp: Date.now()
+      });
+    } catch (fallbackError) {
+      // If even the fallback fails, use the static fallback jokes
+      res.json({ 
+        success: true, 
+        joke: getRandomFallbackJoke(),
+        wasError: true,
+        timestamp: Date.now()
+      });
+    }
   }
 });
 
