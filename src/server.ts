@@ -150,26 +150,51 @@ function getRandomFallbackJoke() {
   return fallbackJokes[randomIndex];
 }
 
-// Function to get a random joke category
-function getRandomCategory(): string {
+// Cache to store recently generated jokes
+const recentJokesCache = new Set<string>();
+const MAX_CACHE_SIZE = 1000; // Store last 1000 jokes to avoid repeats
+
+// Function to get a random joke category and theme
+function getRandomJokeParams(): { category: string, theme: string, style: string } {
   const categories = [
-    "technology", "food", "animals", "weather", "sports", 
-    "music", "science", "nature", "office", "books",
-    "art", "travel", "space", "ocean", "gardening"
+    "technology", "food", "animals", "weather", "sports", "music", "science",
+    "nature", "office", "books", "art", "travel", "space", "ocean", "gardening",
+    "computers", "internet", "coffee", "pizza", "cats", "dogs", "birds",
+    "mathematics", "physics", "chemistry", "biology", "astronomy", "geology",
+    "history", "geography", "cooking", "baking", "vegetables", "fruits",
+    "programming", "coding", "gaming", "movies", "television", "radio",
+    "photography", "painting", "dancing", "singing", "instruments", "theater",
+    "camping", "hiking", "swimming", "running", "cycling", "yoga", "meditation"
   ];
-  return categories[Math.floor(Math.random() * categories.length)];
+
+  const themes = [
+    "wordplay", "puns", "situational", "observational", "comparison", "contrast",
+    "absurdist", "reversal", "misdirection", "cultural", "educational", "seasonal",
+    "metaphorical", "literal", "exaggeration", "understatement"
+  ];
+
+  const styles = [
+    "classic", "modern", "silly", "clever", "nerdy", "witty", "playful",
+    "unexpected", "wholesome", "goofy", "smart", "quirky"
+  ];
+
+  return {
+    category: categories[Math.floor(Math.random() * categories.length)],
+    theme: themes[Math.floor(Math.random() * themes.length)],
+    style: styles[Math.floor(Math.random() * styles.length)]
+  };
 }
 
 // Function to generate a dad joke using OpenAI with timeout
 async function generateDadJoke(): Promise<{ setup: string, punchline: string }> {
   try {
-    // Create a promise that rejects after 5 seconds
+    // Create a promise that rejects after 8 seconds (increased timeout for more creative generation)
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('OpenAI request timed out')), 5000);
+      setTimeout(() => reject(new Error('OpenAI request timed out')), 8000);
     });
 
     // Get random elements to make the joke more unique
-    const category = getRandomCategory();
+    const { category, theme, style } = getRandomJokeParams();
     const timestamp = Date.now();
 
     // Create the OpenAI request promise with increased randomness
@@ -179,24 +204,27 @@ async function generateDadJoke(): Promise<{ setup: string, punchline: string }> 
         {
           role: "system",
           content: `You are a dad joke generator specializing in unique, original jokes. Follow these rules:
-1. Create a NEW, ORIGINAL dad joke about ${category}
+1. Create a NEW, ORIGINAL dad joke combining ${category} with ${theme} humor in a ${style} style
 2. Never use common or overused dad joke formats
-3. Avoid puns that have been used before
-4. Make it clever but still family-friendly
+3. Avoid any puns or jokes that might have been used before
+4. Make it clever and family-friendly
 5. Return ONLY a JSON object with format {"setup": "joke setup", "punchline": "joke punchline"}
 6. Keep the setup concise (under 60 characters if possible)
-7. Make the punchline punchy and unexpected
-8. Do not explain the joke or add any other text`
+7. Make the punchline unexpected and memorable
+8. Use creative wordplay that combines multiple meanings
+9. Incorporate specific terminology from the ${category} field
+10. Make the connection between setup and punchline non-obvious but satisfying
+11. Do not explain the joke or add any other text`
         },
         {
           role: "user",
-          content: `Generate a completely unique dad joke about ${category}. Current time: ${timestamp} (use this for uniqueness)`
+          content: `Generate a completely unique ${style} dad joke about ${category} using ${theme} humor. Make it unlike any joke that exists. Current time: ${timestamp}`
         }
       ],
-      temperature: 0.95,
-      presence_penalty: 0.8,
-      frequency_penalty: 0.9,
-      max_tokens: 100
+      temperature: 1.0,
+      presence_penalty: 1.0,
+      frequency_penalty: 1.0,
+      max_tokens: 150
     });
 
     // Race between the timeout and the actual request
@@ -208,6 +236,23 @@ async function generateDadJoke(): Promise<{ setup: string, punchline: string }> 
       const jokeObject = JSON.parse(content);
       if (typeof jokeObject.setup === 'string' && typeof jokeObject.punchline === 'string' &&
           jokeObject.setup.length > 0 && jokeObject.punchline.length > 0) {
+        
+        // Create a unique identifier for the joke
+        const jokeId = `${jokeObject.setup}|${jokeObject.punchline}`;
+        
+        // Check if this joke was recently used
+        if (recentJokesCache.has(jokeId)) {
+          console.log('Joke was recently used, generating another one');
+          return generateDadJoke(); // Recursively try again
+        }
+        
+        // Add to cache and maintain cache size
+        recentJokesCache.add(jokeId);
+        if (recentJokesCache.size > MAX_CACHE_SIZE) {
+          const firstItem = recentJokesCache.values().next().value;
+          recentJokesCache.delete(firstItem);
+        }
+        
         return {
           setup: jokeObject.setup,
           punchline: jokeObject.punchline
