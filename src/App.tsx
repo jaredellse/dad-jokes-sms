@@ -138,7 +138,20 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [effectiveApiUrl, setEffectiveApiUrl] = useState<string>(apiBaseUrl);
   const [isCheckingApi, setIsCheckingApi] = useState<boolean>(true);
+  const [copySuccess, setCopySuccess] = useState<string>('');
   
+  // Function to copy text to clipboard
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopySuccess('Copied!');
+      setTimeout(() => setCopySuccess(''), 2000);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+      setCopySuccess('Failed to copy');
+    }
+  };
+
   // Test API connection on initial load
   useEffect(() => {
     async function checkApiConnectivity() {
@@ -294,6 +307,14 @@ function App() {
                       {line}
                     </p>
                   ))}
+                  <button 
+                    className="copy-button"
+                    onClick={() => copyToClipboard(joke)}
+                    title="Copy joke to clipboard"
+                  >
+                    📋 Copy Joke
+                  </button>
+                  {copySuccess && <span className="copy-feedback">{copySuccess}</span>}
                 </div>
                 <p className="joke-source">
                   {currentJokeIndex === -1 ? 

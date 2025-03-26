@@ -40,6 +40,7 @@
   flex-direction: column;
   gap: 1rem;
   padding: 0.5rem;
+  position: relative;
 }
 
 .joke-setup {
@@ -169,4 +170,62 @@ button.loading::after {
   text-align: center;
   padding-top: 0.5rem;
   border-top: 1px solid #eee;
+}
+
+.joke-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.joke-line p {
+  margin: 0;
+  flex-grow: 1;
+}
+
+.copy-button {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 1rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #495057;
+  border-radius: 4px;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.copy-button:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.copy-feedback {
+  position: absolute;
+  right: 0;
+  bottom: -25px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
