@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { SmsSender } from './components/SmsSender'
 import './App.css'
 
 // Get the API base URL from environment variables
@@ -114,7 +113,7 @@ const handleApiError = (error: any) => {
 async function testApiConnection(url: string): Promise<boolean> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // Increased timeout for initial load
 
     const response = await fetch(`${url}/api/generate-joke`, {
       method: 'GET',
@@ -138,40 +137,66 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [effectiveApiUrl, setEffectiveApiUrl] = useState<string>(apiBaseUrl);
+  const [isCheckingApi, setIsCheckingApi] = useState<boolean>(true);
   
   // Test API connection on initial load
   useEffect(() => {
     async function checkApiConnectivity() {
-      // First try the configured URL
-      if (apiBaseUrl && await testApiConnection(apiBaseUrl)) {
-        console.log('Using configured API URL:', apiBaseUrl);
-        setEffectiveApiUrl(apiBaseUrl);
-        return;
+      setIsCheckingApi(true);
+      try {
+        // First try the configured URL
+        if (apiBaseUrl) {
+          console.log('Trying configured API URL:', apiBaseUrl);
+          if (await testApiConnection(apiBaseUrl)) {
+            console.log('Using configured API URL:', apiBaseUrl);
+            setEffectiveApiUrl(apiBaseUrl);
+            setIsCheckingApi(false);
+            return;
+          }
+        }
+        
+        // Try Railway production URL as fallback
+        const railwayUrl = 'https://dad-jokes-sms-production.up.railway.app';
+        console.log('Trying Railway URL:', railwayUrl);
+        if (await testApiConnection(railwayUrl)) {
+          console.log('Using Railway URL:', railwayUrl);
+          setEffectiveApiUrl(railwayUrl);
+          setIsCheckingApi(false);
+          return;
+        }
+        
+        // Fall back to localhost for development
+        if (import.meta.env.MODE === 'development') {
+          const localUrl = 'http://localhost:3001';
+          console.log('Trying localhost URL:', localUrl);
+          if (await testApiConnection(localUrl)) {
+            console.log('Using localhost URL:', localUrl);
+            setEffectiveApiUrl(localUrl);
+            setIsCheckingApi(false);
+            return;
+          }
+        }
+        
+        // No working API found, will use fallback jokes
+        console.warn('No working API found, using client-side jokes only');
+        setEffectiveApiUrl('');
+      } catch (error) {
+        console.error('Error checking API connectivity:', error);
+        setEffectiveApiUrl('');
+      } finally {
+        setIsCheckingApi(false);
       }
-      
-      // Try Railway production URL as fallback
-      const railwayUrl = 'https://dad-jokes-sms-production.up.railway.app';
-      if (await testApiConnection(railwayUrl)) {
-        console.log('Using Railway URL:', railwayUrl);
-        setEffectiveApiUrl(railwayUrl);
-        return;
-      }
-      
-      // Fall back to localhost for development
-      const localUrl = 'http://localhost:3001';
-      if (await testApiConnection(localUrl)) {
-        console.log('Using localhost URL:', localUrl);
-        setEffectiveApiUrl(localUrl);
-        return;
-      }
-      
-      // No working API found, will use fallback jokes
-      console.warn('No working API found, using client-side jokes only');
-      setEffectiveApiUrl('');
     }
     
     checkApiConnectivity();
   }, []);
+
+  // Load initial joke after API check is complete
+  useEffect(() => {
+    if (!isCheckingApi) {
+      getRandomJoke();
+    }
+  }, [isCheckingApi]);
 
   const getRandomJoke = () => {
     const newIndex = Math.floor(Math.random() * sophisticatedJokes.length);
@@ -181,15 +206,19 @@ function App() {
   };
 
   const generateAIJoke = async () => {
+    // Don't proceed if we're still checking API availability
+    if (isCheckingApi) {
+      console.log('Still checking API availability, please wait...');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
-    // Show a random joke immediately
-    getRandomJoke();
-    
-    // If no API is available, just keep the random joke
+    // If no API is available, just show a random joke
     if (!effectiveApiUrl) {
       console.log('No API URL available, using local jokes');
+      getRandomJoke();
       setLoading(false);
       return;
     }
@@ -230,30 +259,34 @@ function App() {
       console.error('Error fetching joke:', error);
       if (error instanceof Error && error.name === 'AbortError') {
         setError('Request timed out. Using a random joke instead!');
+        getRandomJoke(); // Show a random joke on timeout
       } else {
         setError(handleApiError(error));
+        getRandomJoke(); // Show a random joke on error
       }
-      // Keep the random joke displayed if there's an error
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    getRandomJoke();
-  }, []);
-
   return (
     <div className="app-container">
       <div className="content">
-        <h1>Dad Jokes SMS</h1>
-        <p>Generate and send dad jokes via SMS!</p>
+        <h1>Dad Jokes</h1>
+        <p>Generate dad jokes with AI!</p>
         
         <div className="joke-section">
           <div className="joke-container">
-            {joke ? (
+            {isCheckingApi ? (
+              <p className="loading-text">Loading...</p>
+            ) : joke ? (
               <>
                 <p className="joke-text">{joke}</p>
+                <p className="joke-source">
+                  {currentJokeIndex === -1 ? 
+                    "🤖 AI-Generated Joke" : 
+                    "📚 Pre-stored Joke"}
+                </p>
                 {loading && <p className="loading-text">Loading new joke...</p>}
               </>
             ) : (
@@ -264,18 +297,12 @@ function App() {
           
           <button 
             onClick={generateAIJoke} 
-            disabled={loading}
+            disabled={loading || isCheckingApi}
             className={loading ? 'loading' : ''}
           >
             {loading ? 'Generating...' : 'Generate AI Joke'}
           </button>
         </div>
-
-        <SmsSender 
-          joke={joke} 
-          apiBaseUrl={effectiveApiUrl} 
-          onError={(msg: string) => setError(msg)}
-        />
       </div>
     </div>
   );
