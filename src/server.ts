@@ -249,8 +249,10 @@ async function generateDadJoke(): Promise<{ setup: string, punchline: string }> 
         // Add to cache and maintain cache size
         recentJokesCache.add(jokeId);
         if (recentJokesCache.size > MAX_CACHE_SIZE) {
-          const firstItem = recentJokesCache.values().next().value;
-          recentJokesCache.delete(firstItem);
+          const firstItem = Array.from(recentJokesCache)[0];
+          if (firstItem) {
+            recentJokesCache.delete(firstItem);
+          }
         }
         
         return {
