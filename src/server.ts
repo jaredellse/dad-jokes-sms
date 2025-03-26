@@ -150,6 +150,16 @@ function getRandomFallbackJoke() {
   return fallbackJokes[randomIndex];
 }
 
+// Function to get a random joke category
+function getRandomCategory(): string {
+  const categories = [
+    "technology", "food", "animals", "weather", "sports", 
+    "music", "science", "nature", "office", "books",
+    "art", "travel", "space", "ocean", "gardening"
+  ];
+  return categories[Math.floor(Math.random() * categories.length)];
+}
+
 // Function to generate a dad joke using OpenAI with timeout
 async function generateDadJoke(): Promise<{ setup: string, punchline: string }> {
   try {
@@ -158,22 +168,35 @@ async function generateDadJoke(): Promise<{ setup: string, punchline: string }> 
       setTimeout(() => reject(new Error('OpenAI request timed out')), 5000);
     });
 
+    // Get random elements to make the joke more unique
+    const category = getRandomCategory();
+    const timestamp = Date.now();
+
     // Create the OpenAI request promise with increased randomness
     const openAiPromise = openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are a dad joke generator. Generate a funny, clean, and UNIQUE dad joke with a setup and punchline. Be creative and avoid common or overused jokes. Return ONLY a JSON object with format {\"setup\": \"joke setup\", \"punchline\": \"joke punchline\"}. No additional text or explanation."
+          content: `You are a dad joke generator specializing in unique, original jokes. Follow these rules:
+1. Create a NEW, ORIGINAL dad joke about ${category}
+2. Never use common or overused dad joke formats
+3. Avoid puns that have been used before
+4. Make it clever but still family-friendly
+5. Return ONLY a JSON object with format {"setup": "joke setup", "punchline": "joke punchline"}
+6. Keep the setup concise (under 60 characters if possible)
+7. Make the punchline punchy and unexpected
+8. Do not explain the joke or add any other text`
         },
         {
           role: "user",
-          content: `Generate a new unique dad joke (seed: ${Date.now()})`
+          content: `Generate a completely unique dad joke about ${category}. Current time: ${timestamp} (use this for uniqueness)`
         }
       ],
-      temperature: 0.9,
-      presence_penalty: 0.6,
-      frequency_penalty: 0.8,
+      temperature: 0.95,
+      presence_penalty: 0.8,
+      frequency_penalty: 0.9,
+      max_tokens: 100
     });
 
     // Race between the timeout and the actual request
