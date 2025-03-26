@@ -202,7 +202,7 @@ function App() {
     const newIndex = Math.floor(Math.random() * sophisticatedJokes.length);
     setCurrentJokeIndex(newIndex);
     const selectedJoke = sophisticatedJokes[newIndex];
-    setJoke(`${selectedJoke.question} ${selectedJoke.punchline}`);
+    setJoke(`${selectedJoke.question}\n${selectedJoke.punchline}`);
   };
 
   const generateAIJoke = async () => {
@@ -258,7 +258,7 @@ function App() {
       const data = await response.json();
       if (data.success && data.joke) {
         setCurrentJokeIndex(-1); // Mark as AI joke
-        setJoke(`${data.joke.setup} ${data.joke.punchline}`);
+        setJoke(`${data.joke.setup}\n${data.joke.punchline}`);
       } else if (data.error) {
         throw new Error(data.error);
       }
@@ -288,7 +288,13 @@ function App() {
               <p className="loading-text">Loading...</p>
             ) : joke ? (
               <>
-                <p className="joke-text">{joke}</p>
+                <div className="joke-content">
+                  {joke.split('\n').map((line, index) => (
+                    <p key={index} className={index === 0 ? "joke-setup" : "joke-punchline"}>
+                      {line}
+                    </p>
+                  ))}
+                </div>
                 <p className="joke-source">
                   {currentJokeIndex === -1 ? 
                     "🤖 AI-Generated Joke" : 
