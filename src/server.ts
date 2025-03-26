@@ -158,20 +158,22 @@ async function generateDadJoke(): Promise<{ setup: string, punchline: string }> 
       setTimeout(() => reject(new Error('OpenAI request timed out')), 5000);
     });
 
-    // Create the OpenAI request promise
+    // Create the OpenAI request promise with increased randomness
     const openAiPromise = openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are a dad joke generator. Generate a funny, clean dad joke with a setup and punchline. Return ONLY a JSON object with format {\"setup\": \"joke setup\", \"punchline\": \"joke punchline\"}. No additional text or explanation."
+          content: "You are a dad joke generator. Generate a funny, clean, and UNIQUE dad joke with a setup and punchline. Be creative and avoid common or overused jokes. Return ONLY a JSON object with format {\"setup\": \"joke setup\", \"punchline\": \"joke punchline\"}. No additional text or explanation."
         },
         {
           role: "user",
-          content: "Generate a new dad joke"
+          content: `Generate a new unique dad joke (seed: ${Date.now()})`
         }
       ],
-      temperature: 0.7,
+      temperature: 0.9,
+      presence_penalty: 0.6,
+      frequency_penalty: 0.8,
     });
 
     // Race between the timeout and the actual request
