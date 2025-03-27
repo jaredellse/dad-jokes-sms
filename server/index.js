@@ -26,9 +26,9 @@ const openai = new OpenAI({
 
 // Updated CORS configuration with more permissive settings for development
 app.use(cors({
-  origin: true, // Allow all origins in development
-  credentials: true,
-  methods: ['GET', 'POST']
+  origin: ['http://localhost:5173', 'http://localhost:4173', 'https://jaredellse.github.io'],
+  methods: ['GET', 'POST'],
+  credentials: true
 }));
 
 // Parse JSON bodies
