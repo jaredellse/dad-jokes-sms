@@ -12,15 +12,33 @@ export default function OpenAIJokes() {
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
+  const API_BASE_URL = import.meta.env.DEV 
+    ? 'http://localhost:3001' 
+    : 'https://dad-jokes-sms-server.onrender.com';
+
   const generateJokes = async () => {
     setIsLoading(true);
     setError(null);
     setJokes([]);
+    
+    // Try the test endpoint first
     try {
-      const response = await fetch('/api/jokes', {
+      const testResponse = await fetch(`${API_BASE_URL}/api/test`);
+      if (!testResponse.ok) {
+        throw new Error('Server is not responding');
+      }
+    } catch (err) {
+      setError('Server is not available. Please ensure the server is running.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/jokes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({ 
           count: 5,
@@ -29,9 +47,16 @@ export default function OpenAIJokes() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || `Server error: ${response.status}`);
+        let errorMessage = 'Failed to fetch jokes';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.details || `Server error: ${response.status}`;
+        } catch (e) {
+          errorMessage = `Server error: ${response.status}`;
+        }
+        throw new Error(errorMessage);
       }
+
       const data = await response.json();
       if (!Array.isArray(data)) {
         throw new Error('Invalid response format');
@@ -39,8 +64,8 @@ export default function OpenAIJokes() {
       setJokes(data);
       setCurrentJokeIndex(0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch jokes');
       console.error('Error fetching jokes:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch jokes');
     } finally {
       setIsLoading(false);
     }

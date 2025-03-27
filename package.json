@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cleanup": "pkill -f node && lsof -ti :5174 | xargs kill -9 2>/dev/null || true && lsof -ti :3001 | xargs kill -9 2>/dev/null || true",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@types/axios": "^0.14.4",
