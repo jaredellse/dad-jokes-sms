@@ -4,30 +4,28 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/dad-jokes-sms/',
   build: {
     outDir: 'dist',
     sourcemap: true,
     assetsDir: 'assets',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        format: 'es',
+        entryFileNames: '[name].[hash].mjs',
+        chunkFileNames: '[name].[hash].mjs',
+        assetFileNames: '[name].[hash][extname]'
+      }
+    }
   },
   server: {
-    port: 5174,
+    port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:5174',
         changeOrigin: true,
-        secure: false,
-      },
-      '/ws': {
-        target: 'ws://localhost:3001',
-        ws: true,
+        secure: false
       }
-    },
-    hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: 5174
     }
   }
 })

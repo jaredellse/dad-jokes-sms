@@ -12,6 +12,8 @@
   "dependencies": {
     "@types/axios": "^0.14.4",
     "axios": "^1.8.4",
+    "dotenv": "^16.4.7",
+    "openai": "^4.89.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
