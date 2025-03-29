@@ -12,7 +12,9 @@ export default function OpenAIJokes() {
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  const API_BASE_URL = 'https://dad-jokes-sms-server.onrender.com/api/jokes';
+  const API_BASE_URL = import.meta.env.DEV 
+    ? 'http://localhost:3001'
+    : 'https://dad-jokes-sms-server.onrender.com';
 
   const generateJokes = async () => {
     setIsLoading(true);
