@@ -1,9 +1,9 @@
 /// <reference types="express" />
 /// <reference types="cors" />
 
-import express, { Request, Response } from 'express';
-import cors from 'cors';
-import { jokes } from './jokes';
+const express = require('express');
+const cors = require('cors');
+const { jokes } = require('./jokes');
 
 const app = express();
 app.use(cors());
@@ -75,7 +75,7 @@ function getWeightedRandomIndex(length: number, temperature: number): number {
 }
 
 // API endpoint to get a random joke
-app.get('/api/generate-joke', (req: Request, res: Response) => {
+app.get('/api/generate-joke', (req: any, res: any) => {
   const category = (req.query.category as string)?.toLowerCase() || 'general';
   const temperature = parseFloat(req.query.temperature as string) || 0.7;
   
@@ -114,7 +114,7 @@ app.get('/api/generate-joke', (req: Request, res: Response) => {
 });
 
 // Health check endpoint
-app.get('/api/health', (_, res) => {
+app.get('/api/health', (_: any, res: any) => {
   res.json({ 
     status: 'ok',
     version: '1.0.0',
