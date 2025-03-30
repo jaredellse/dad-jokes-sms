@@ -58,7 +58,7 @@ export default function OpenAIJokes() {
     try {
       // Generate multiple jokes by making parallel requests
       const jokePromises = Array(5).fill(null).map(async () => {
-        const response = await fetch(`${API_BASE_URL}/api/generate-joke`, {
+        const response = await fetch(`${API_BASE_URL}/api/jokes/generate`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
