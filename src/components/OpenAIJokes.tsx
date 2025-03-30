@@ -106,14 +106,13 @@ export default function OpenAIJokes() {
   const fetchJoke = async (): Promise<Joke> => {
     const category = getNextCategory();
     const response = await fetch(`${API_BASE_URL}/api/generate-joke`, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         category: category,
-        // Add some randomization parameters
         temperature: Math.random() * 0.4 + 0.7, // Random between 0.7 and 1.1
         exclude_recent: true // Tell server to avoid recent jokes
       })
