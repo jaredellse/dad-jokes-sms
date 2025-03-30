@@ -10,7 +10,50 @@ interface JokeResponse {
   joke: Joke;
 }
 
-const CATEGORIES = ['food', 'animals', 'tech', 'music', 'weather', 'sports'] as const;
+const CATEGORIES = [
+  // Food and Drinks
+  'food', 'cooking', 'restaurants', 'baking', 'coffee', 'pizza', 'desserts', 'vegetables',
+  
+  // Animals and Nature
+  'animals', 'dogs', 'cats', 'birds', 'fish', 'wildlife', 'garden', 'plants', 'ocean',
+  
+  // Technology
+  'tech', 'computers', 'phones', 'internet', 'programming', 'robots', 'gadgets', 'social-media',
+  
+  // Music and Arts
+  'music', 'instruments', 'bands', 'singing', 'dancing', 'painting', 'theater', 'movies',
+  
+  // Weather and Nature
+  'weather', 'seasons', 'rain', 'snow', 'sun', 'clouds', 'storms', 'rainbows',
+  
+  // Sports and Activities
+  'sports', 'football', 'basketball', 'baseball', 'soccer', 'tennis', 'golf', 'swimming',
+  
+  // Jobs and Professions
+  'doctors', 'teachers', 'chefs', 'artists', 'scientists', 'lawyers', 'pilots', 'firefighters',
+  
+  // Places
+  'beach', 'mountains', 'city', 'farm', 'park', 'school', 'office', 'library', 'zoo',
+  
+  // Transportation
+  'cars', 'bikes', 'trains', 'planes', 'boats', 'buses', 'rockets', 'submarines',
+  
+  // Science
+  'space', 'chemistry', 'physics', 'biology', 'astronomy', 'dinosaurs', 'experiments',
+  
+  // Everyday Objects
+  'furniture', 'tools', 'toys', 'books', 'clothes', 'shoes', 'hats', 'glasses',
+  
+  // Holidays and Events
+  'holidays', 'birthday', 'halloween', 'christmas', 'vacation', 'parties', 'camping',
+  
+  // Fantasy and Adventure
+  'magic', 'dragons', 'pirates', 'superheroes', 'aliens', 'monsters', 'wizards',
+  
+  // Time
+  'morning', 'night', 'time-travel', 'history', 'future', 'calendar', 'clocks'
+] as const;
+
 type Category = typeof CATEGORIES[number];
 
 export default function OpenAIJokes() {
