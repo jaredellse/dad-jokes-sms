@@ -16,6 +16,20 @@ export default function OpenAIJokes() {
     ? 'http://localhost:3001'
     : 'https://dad-jokes-sms-api.onrender.com';
 
+  const checkResponseAndParseJson = async (response: Response) => {
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Server returned non-JSON response. Please try again later.');
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: `Server error: ${response.status}` }));
+      throw new Error(errorData.message || `Server error: ${response.status}`);
+    }
+
+    return response.json();
+  };
+
   const generateJokes = async () => {
     setIsLoading(true);
     setError(null);
@@ -24,10 +38,9 @@ export default function OpenAIJokes() {
     // Try the health check endpoint first
     try {
       const healthResponse = await fetch(`${API_BASE_URL}/api/health`);
-      if (!healthResponse.ok) {
-        throw new Error('Server is not responding');
-      }
+      await checkResponseAndParseJson(healthResponse);
     } catch (err) {
+      console.error('Health check failed:', err);
       setError('Server is not available. Please ensure the server is running.');
       setIsLoading(false);
       return;
@@ -35,17 +48,21 @@ export default function OpenAIJokes() {
 
     try {
       // Generate multiple jokes by making parallel requests
-      const jokePromises = Array(5).fill(null).map(() => 
-        fetch(`${API_BASE_URL}/api/generate-joke`, {
+      const jokePromises = Array(5).fill(null).map(async () => {
+        const response = await fetch(`${API_BASE_URL}/api/generate-joke`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           }
-        }).then(res => res.json())
-      );
+        });
+        return checkResponseAndParseJson(response);
+      });
 
       const jokes = await Promise.all(jokePromises);
+      if (!Array.isArray(jokes) || jokes.some(joke => !joke.setup || !joke.punchline)) {
+        throw new Error('Invalid joke format received from server');
+      }
       setJokes(jokes);
       setCurrentJokeIndex(0);
     } catch (err) {
