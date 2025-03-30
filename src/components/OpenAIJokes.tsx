@@ -42,6 +42,23 @@ export default function OpenAIJokes() {
     return response.json();
   };
 
+  const fetchJoke = async (): Promise<Joke> => {
+    const response = await fetch(`${API_BASE_URL}/api/generate-joke`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    const jokeResponse = await checkResponseAndParseJson(response) as JokeResponse;
+    return jokeResponse.joke;
+  };
+
+  const isJokeUnique = (joke: Joke, existingJokes: Joke[]): boolean => {
+    return !existingJokes.some(
+      existing => existing.setup === joke.setup || existing.punchline === joke.punchline
+    );
+  };
+
   const generateJokes = async () => {
     setIsLoading(true);
     setError(null);
@@ -61,27 +78,26 @@ export default function OpenAIJokes() {
     }
 
     try {
-      // Generate multiple jokes by making parallel requests
-      const jokePromises = Array(5).fill(null).map(async () => {
-        const response = await fetch(`${API_BASE_URL}/api/generate-joke`, {
-          method: 'GET',  // Changed to GET since that's what works in the browser
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-        const jokeResponse = await checkResponseAndParseJson(response) as JokeResponse;
-        return jokeResponse.joke;  // Extract the joke from the response
-      });
+      // Generate unique jokes sequentially
+      const uniqueJokes: Joke[] = [];
+      const maxAttempts = 10; // Prevent infinite loop if can't get unique jokes
+      let attempts = 0;
 
-      console.log('Waiting for jokes...');
-      const jokes = await Promise.all(jokePromises);
-      console.log('Received jokes:', jokes);
-      
-      if (!Array.isArray(jokes) || jokes.some(joke => !joke.setup || !joke.punchline)) {
-        console.error('Invalid joke format:', jokes);
-        throw new Error('Invalid joke format received from server');
+      while (uniqueJokes.length < 5 && attempts < maxAttempts) {
+        const joke = await fetchJoke();
+        if (isJokeUnique(joke, uniqueJokes)) {
+          uniqueJokes.push(joke);
+        }
+        attempts++;
       }
-      setJokes(jokes);
+
+      console.log('Received jokes:', uniqueJokes);
+      
+      if (uniqueJokes.length === 0) {
+        throw new Error('Could not generate any unique jokes');
+      }
+
+      setJokes(uniqueJokes);
       setCurrentJokeIndex(0);
     } catch (err) {
       console.error('Error fetching jokes:', err);
