@@ -45,7 +45,7 @@ export default function OpenAIJokes() {
     // Try the health check endpoint first
     try {
       console.log('Checking server health...');
-      const healthResponse = await fetch(`${API_BASE_URL}/api/health`);
+      const healthResponse = await fetch(`${API_BASE_URL}/api/test`);
       await checkResponseAndParseJson(healthResponse);
       console.log('Server health check passed');
     } catch (err) {
