@@ -19,12 +19,19 @@ export default function OpenAIJokes() {
   const checkResponseAndParseJson = async (response: Response) => {
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
-      throw new Error('Server returned non-JSON response. Please try again later.');
+      console.error('Invalid content type:', contentType);
+      throw new Error(`Server returned non-JSON response (${contentType}). Please try again later.`);
     }
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: `Server error: ${response.status}` }));
-      throw new Error(errorData.message || `Server error: ${response.status}`);
+      const text = await response.text();
+      console.error('Server error response:', text);
+      try {
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.message || `Server error: ${response.status}`);
+      } catch (e) {
+        throw new Error(`Server error ${response.status}: ${text.slice(0, 100)}`);
+      }
     }
 
     return response.json();
@@ -37,8 +44,10 @@ export default function OpenAIJokes() {
     
     // Try the health check endpoint first
     try {
+      console.log('Checking server health...');
       const healthResponse = await fetch(`${API_BASE_URL}/api/health`);
       await checkResponseAndParseJson(healthResponse);
+      console.log('Server health check passed');
     } catch (err) {
       console.error('Health check failed:', err);
       setError('Server is not available. Please ensure the server is running.');
@@ -54,13 +63,21 @@ export default function OpenAIJokes() {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
-          }
+          },
+          body: JSON.stringify({
+            type: 'dad-joke',
+            format: 'setup-punchline'
+          })
         });
         return checkResponseAndParseJson(response);
       });
 
+      console.log('Waiting for jokes...');
       const jokes = await Promise.all(jokePromises);
+      console.log('Received jokes:', jokes);
+      
       if (!Array.isArray(jokes) || jokes.some(joke => !joke.setup || !joke.punchline)) {
+        console.error('Invalid joke format:', jokes);
         throw new Error('Invalid joke format received from server');
       }
       setJokes(jokes);
