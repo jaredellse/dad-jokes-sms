@@ -105,17 +105,11 @@ export default function OpenAIJokes() {
 
   const fetchJoke = async (): Promise<Joke> => {
     const category = getNextCategory();
-    const response = await fetch(`${API_BASE_URL}/api/generate-joke`, {
-      method: 'POST',
+    const response = await fetch(`${API_BASE_URL}/api/generate-joke?category=${encodeURIComponent(category)}&temperature=${encodeURIComponent(Math.random() * 0.4 + 0.7)}&exclude_recent=true`, {
+      method: 'GET',
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        category: category,
-        temperature: Math.random() * 0.4 + 0.7, // Random between 0.7 and 1.1
-        exclude_recent: true // Tell server to avoid recent jokes
-      })
+        'Accept': 'application/json'
+      }
     });
     const jokeResponse = await checkResponseAndParseJson(response) as JokeResponse;
     
