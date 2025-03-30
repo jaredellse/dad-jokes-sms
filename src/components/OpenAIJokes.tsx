@@ -56,24 +56,20 @@ export default function OpenAIJokes() {
     }
 
     try {
-      // Generate multiple jokes by making parallel requests
-      const jokePromises = Array(5).fill(null).map(async () => {
-        const response = await fetch(`${API_BASE_URL}/api/jokes/generate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            type: 'dad-joke',
-            format: 'setup-punchline'
-          })
-        });
-        return checkResponseAndParseJson(response);
+      // Make a single request for multiple jokes
+      const response = await fetch(`${API_BASE_URL}/api/jokes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          count: 5
+        })
       });
 
       console.log('Waiting for jokes...');
-      const jokes = await Promise.all(jokePromises);
+      const jokes = await checkResponseAndParseJson(response);
       console.log('Received jokes:', jokes);
       
       if (!Array.isArray(jokes) || jokes.some(joke => !joke.setup || !joke.punchline)) {
