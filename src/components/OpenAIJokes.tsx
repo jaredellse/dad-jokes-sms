@@ -45,7 +45,7 @@ export default function OpenAIJokes() {
     // Try the health check endpoint first
     try {
       console.log('Checking server health...');
-      const healthResponse = await fetch(`${API_BASE_URL}/api/test`);
+      const healthResponse = await fetch(`${API_BASE_URL}/api/health`);
       await checkResponseAndParseJson(healthResponse);
       console.log('Server health check passed');
     } catch (err) {
@@ -56,20 +56,20 @@ export default function OpenAIJokes() {
     }
 
     try {
-      // Make a single request for multiple jokes
-      const response = await fetch(`${API_BASE_URL}/api/jokes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          count: 5
-        })
+      // Generate multiple jokes by making parallel requests
+      const jokePromises = Array(5).fill(null).map(async () => {
+        const response = await fetch(`${API_BASE_URL}/api/generate-joke`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+        return checkResponseAndParseJson(response);
       });
 
       console.log('Waiting for jokes...');
-      const jokes = await checkResponseAndParseJson(response);
+      const jokes = await Promise.all(jokePromises);
       console.log('Received jokes:', jokes);
       
       if (!Array.isArray(jokes) || jokes.some(joke => !joke.setup || !joke.punchline)) {
