@@ -14,7 +14,7 @@ export default function OpenAIJokes() {
 
   const API_BASE_URL = import.meta.env.DEV 
     ? 'http://localhost:3001'
-    : 'https://dad-jokes-sms-server.onrender.com';
+    : 'https://dad-jokes-sms-api.onrender.com';
 
   const generateJokes = async () => {
     setIsLoading(true);
