@@ -10,12 +10,16 @@ interface JokeResponse {
   joke: Joke;
 }
 
+const CATEGORIES = ['food', 'animals', 'tech', 'music', 'weather', 'sports'] as const;
+type Category = typeof CATEGORIES[number];
+
 export default function OpenAIJokes() {
   const [jokes, setJokes] = useState<Joke[]>([]);
   const [currentJokeIndex, setCurrentJokeIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [usedCategories, setUsedCategories] = useState<Category[]>([]);
 
   const API_BASE_URL = import.meta.env.DEV 
     ? 'http://localhost:3001'
@@ -42,7 +46,22 @@ export default function OpenAIJokes() {
     return response.json();
   };
 
+  const getNextCategory = (): Category => {
+    // Get unused categories first
+    const unusedCategories = CATEGORIES.filter(cat => !usedCategories.includes(cat));
+    
+    // If all categories used, reset the list
+    if (unusedCategories.length === 0) {
+      setUsedCategories([]);
+      return CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
+    }
+    
+    // Pick a random unused category
+    return unusedCategories[Math.floor(Math.random() * unusedCategories.length)];
+  };
+
   const fetchJoke = async (): Promise<Joke> => {
+    const category = getNextCategory();
     const response = await fetch(`${API_BASE_URL}/api/generate-joke`, {
       method: 'GET',
       headers: {
@@ -50,6 +69,10 @@ export default function OpenAIJokes() {
       }
     });
     const jokeResponse = await checkResponseAndParseJson(response) as JokeResponse;
+    
+    // Add the used category to our list
+    setUsedCategories(prev => [...prev, category]);
+    
     return jokeResponse.joke;
   };
 
@@ -63,6 +86,7 @@ export default function OpenAIJokes() {
     setIsLoading(true);
     setError(null);
     setJokes([]);
+    setUsedCategories([]); // Reset categories when generating new batch
     
     // Try the health check endpoint first
     try {
