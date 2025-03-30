@@ -120,9 +120,12 @@ export default function OpenAIJokes() {
   };
 
   const isJokeUnique = (joke: Joke, existingJokes: Joke[]): boolean => {
-    // Make comparison more fuzzy to catch similar jokes
+    // Make comparison more fuzzy to catch similar jokes, but less strict
     const normalizeText = (text: string) => 
-      text.toLowerCase().replace(/[^a-z0-9]/g, '');
+      text.toLowerCase()
+        .replace(/[^a-z0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
     
     const jokeSetup = normalizeText(joke.setup);
     const jokePunchline = normalizeText(joke.punchline);
@@ -131,13 +134,24 @@ export default function OpenAIJokes() {
       const existingSetup = normalizeText(existing.setup);
       const existingPunchline = normalizeText(existing.punchline);
       
-      // Check for significant overlap in either setup or punchline
-      const setupSimilarity = jokeSetup.length > 0 && 
-        (existingSetup.includes(jokeSetup) || jokeSetup.includes(existingSetup));
-      const punchlineSimilarity = jokePunchline.length > 0 && 
-        (existingPunchline.includes(jokePunchline) || jokePunchline.includes(existingPunchline));
+      // Only consider exact matches or very high overlap
+      const setupMatch = jokeSetup === existingSetup;
+      const punchlineMatch = jokePunchline === existingPunchline;
       
-      return setupSimilarity || punchlineSimilarity;
+      // Calculate similarity percentage for partial matches
+      const calculateSimilarity = (str1: string, str2: string) => {
+        const longer = str1.length > str2.length ? str1 : str2;
+        const shorter = str1.length > str2.length ? str2 : str1;
+        if (longer.length === 0) return 1.0;
+        return (longer.length - (longer.length - shorter.length)) / longer.length;
+      };
+
+      // Check for high similarity (90% or more) in both setup and punchline
+      const setupSimilarity = calculateSimilarity(jokeSetup, existingSetup);
+      const punchlineSimilarity = calculateSimilarity(jokePunchline, existingPunchline);
+      
+      return (setupMatch && punchlineMatch) || 
+             (setupSimilarity > 0.9 && punchlineSimilarity > 0.9);
     });
   };
 
@@ -185,7 +199,7 @@ export default function OpenAIJokes() {
     try {
       // Generate unique jokes sequentially
       const uniqueJokes: Joke[] = [];
-      const maxAttempts = 15; // Increased max attempts since we're being more strict about uniqueness
+      const maxAttempts = 25; // Increased max attempts to give more chances
       let attempts = 0;
 
       while (uniqueJokes.length < 5 && attempts < maxAttempts) {
@@ -197,6 +211,9 @@ export default function OpenAIJokes() {
           uniqueJokes.push(joke);
         }
         attempts++;
+        
+        // Add a small delay between attempts to avoid overwhelming the server
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       console.log('Received jokes:', uniqueJokes);
