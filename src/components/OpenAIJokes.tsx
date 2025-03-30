@@ -21,10 +21,10 @@ export default function OpenAIJokes() {
     setError(null);
     setJokes([]);
     
-    // Try the test endpoint first
+    // Try the health check endpoint first
     try {
-      const testResponse = await fetch(`${API_BASE_URL}/api/test`);
-      if (!testResponse.ok) {
+      const healthResponse = await fetch(`${API_BASE_URL}/api/health`);
+      if (!healthResponse.ok) {
         throw new Error('Server is not responding');
       }
     } catch (err) {
@@ -34,34 +34,19 @@ export default function OpenAIJokes() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/jokes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ 
-          count: 5,
-          timestamp: Date.now() 
-        })
-      });
-      
-      if (!response.ok) {
-        let errorMessage = 'Failed to fetch jokes';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.details || `Server error: ${response.status}`;
-        } catch (e) {
-          errorMessage = `Server error: ${response.status}`;
-        }
-        throw new Error(errorMessage);
-      }
+      // Generate multiple jokes by making parallel requests
+      const jokePromises = Array(5).fill(null).map(() => 
+        fetch(`${API_BASE_URL}/api/generate-joke`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }).then(res => res.json())
+      );
 
-      const data = await response.json();
-      if (!Array.isArray(data)) {
-        throw new Error('Invalid response format');
-      }
-      setJokes(data);
+      const jokes = await Promise.all(jokePromises);
+      setJokes(jokes);
       setCurrentJokeIndex(0);
     } catch (err) {
       console.error('Error fetching jokes:', err);
