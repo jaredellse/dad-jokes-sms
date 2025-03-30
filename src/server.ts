@@ -115,7 +115,11 @@ app.get('/api/generate-joke', (req: Request, res: Response) => {
 
 // Health check endpoint
 app.get('/api/health', (_, res) => {
-  res.json({ status: 'ok' });
+  res.json({ 
+    status: 'ok',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
 });
 
 const port = process.env.PORT || 3001;
