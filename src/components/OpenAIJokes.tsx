@@ -108,8 +108,15 @@ export default function OpenAIJokes() {
     const response = await fetch(`${API_BASE_URL}/api/generate-joke`, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        category: category,
+        // Add some randomization parameters
+        temperature: Math.random() * 0.4 + 0.7, // Random between 0.7 and 1.1
+        exclude_recent: true // Tell server to avoid recent jokes
+      })
     });
     const jokeResponse = await checkResponseAndParseJson(response) as JokeResponse;
     
@@ -120,10 +127,48 @@ export default function OpenAIJokes() {
   };
 
   const isJokeUnique = (joke: Joke, existingJokes: Joke[]): boolean => {
-    return !existingJokes.some(
-      existing => existing.setup === joke.setup || existing.punchline === joke.punchline
-    );
+    // Make comparison more fuzzy to catch similar jokes
+    const normalizeText = (text: string) => 
+      text.toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    const jokeSetup = normalizeText(joke.setup);
+    const jokePunchline = normalizeText(joke.punchline);
+    
+    return !existingJokes.some(existing => {
+      const existingSetup = normalizeText(existing.setup);
+      const existingPunchline = normalizeText(existing.punchline);
+      
+      // Check for significant overlap in either setup or punchline
+      const setupSimilarity = jokeSetup.length > 0 && 
+        (existingSetup.includes(jokeSetup) || jokeSetup.includes(existingSetup));
+      const punchlineSimilarity = jokePunchline.length > 0 && 
+        (existingPunchline.includes(jokePunchline) || jokePunchline.includes(existingPunchline));
+      
+      return setupSimilarity || punchlineSimilarity;
+    });
   };
+
+  // Add a cache of recently seen jokes to prevent repeats across sessions
+  const [recentJokesCache, setRecentJokesCache] = useState<Set<string>>(() => {
+    const cached = localStorage.getItem('recentJokes');
+    return cached ? new Set(JSON.parse(cached)) : new Set<string>();
+  });
+
+  // Update cache whenever we get new jokes
+  useEffect(() => {
+    if (jokes.length > 0) {
+      const jokeKeys = jokes.map(joke => `${joke.setup}:${joke.punchline}`);
+      const newCache = new Set([...recentJokesCache, ...jokeKeys]);
+      // Keep only the most recent 50 jokes in cache
+      const cacheArray = Array.from(newCache);
+      if (cacheArray.length > 50) {
+        cacheArray.splice(0, cacheArray.length - 50);
+      }
+      const finalCache = new Set(cacheArray);
+      setRecentJokesCache(finalCache);
+      localStorage.setItem('recentJokes', JSON.stringify(Array.from(finalCache)));
+    }
+  }, [jokes]);
 
   const generateJokes = async () => {
     setIsLoading(true);
@@ -147,12 +192,15 @@ export default function OpenAIJokes() {
     try {
       // Generate unique jokes sequentially
       const uniqueJokes: Joke[] = [];
-      const maxAttempts = 10; // Prevent infinite loop if can't get unique jokes
+      const maxAttempts = 15; // Increased max attempts since we're being more strict about uniqueness
       let attempts = 0;
 
       while (uniqueJokes.length < 5 && attempts < maxAttempts) {
         const joke = await fetchJoke();
-        if (isJokeUnique(joke, uniqueJokes)) {
+        const jokeKey = `${joke.setup}:${joke.punchline}`;
+        
+        // Check if joke is unique both in current batch and recent cache
+        if (isJokeUnique(joke, uniqueJokes) && !recentJokesCache.has(jokeKey)) {
           uniqueJokes.push(joke);
         }
         attempts++;
