@@ -5,6 +5,11 @@ interface Joke {
   punchline: string;
 }
 
+interface JokeResponse {
+  success: boolean;
+  joke: Joke;
+}
+
 export default function OpenAIJokes() {
   const [jokes, setJokes] = useState<Joke[]>([]);
   const [currentJokeIndex, setCurrentJokeIndex] = useState(0);
@@ -59,13 +64,13 @@ export default function OpenAIJokes() {
       // Generate multiple jokes by making parallel requests
       const jokePromises = Array(5).fill(null).map(async () => {
         const response = await fetch(`${API_BASE_URL}/api/generate-joke`, {
-          method: 'POST',
+          method: 'GET',  // Changed to GET since that's what works in the browser
           headers: {
-            'Content-Type': 'application/json',
             'Accept': 'application/json'
           }
         });
-        return checkResponseAndParseJson(response);
+        const jokeResponse = await checkResponseAndParseJson(response) as JokeResponse;
+        return jokeResponse.joke;  // Extract the joke from the response
       });
 
       console.log('Waiting for jokes...');
