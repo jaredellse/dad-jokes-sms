@@ -12,46 +12,47 @@ interface JokeResponse {
 
 const CATEGORIES = [
   // Food and Drinks
-  'food', 'cooking', 'restaurants', 'baking', 'coffee', 'pizza', 'desserts', 'vegetables',
+  'food',
   
   // Animals and Nature
-  'animals', 'dogs', 'cats', 'birds', 'fish', 'wildlife', 'garden', 'plants', 'ocean',
+  'animals',
   
   // Technology
-  'tech', 'computers', 'phones', 'internet', 'programming', 'robots', 'gadgets', 'social-media',
+  'tech',
   
   // Music and Arts
-  'music', 'instruments', 'bands', 'singing', 'dancing', 'painting', 'theater', 'movies',
+  'music',
   
-  // Weather and Nature
-  'weather', 'seasons', 'rain', 'snow', 'sun', 'clouds', 'storms', 'rainbows',
+  // Weather
+  'weather',
   
-  // Sports and Activities
-  'sports', 'football', 'basketball', 'baseball', 'soccer', 'tennis', 'golf', 'swimming',
+  // Sports
+  'sports',
   
-  // Jobs and Professions
-  'doctors', 'teachers', 'chefs', 'artists', 'scientists', 'lawyers', 'pilots', 'firefighters',
+  // Science and Education
+  'science',
+  'math',
   
-  // Places
-  'beach', 'mountains', 'city', 'farm', 'park', 'school', 'office', 'library', 'zoo',
-  
-  // Transportation
-  'cars', 'bikes', 'trains', 'planes', 'boats', 'buses', 'rockets', 'submarines',
-  
-  // Science
-  'space', 'chemistry', 'physics', 'biology', 'astronomy', 'dinosaurs', 'experiments',
-  
-  // Everyday Objects
-  'furniture', 'tools', 'toys', 'books', 'clothes', 'shoes', 'hats', 'glasses',
-  
-  // Holidays and Events
-  'holidays', 'birthday', 'halloween', 'christmas', 'vacation', 'parties', 'camping',
-  
-  // Fantasy and Adventure
-  'magic', 'dragons', 'pirates', 'superheroes', 'aliens', 'monsters', 'wizards',
+  // Space
+  'space',
   
   // Time
-  'morning', 'night', 'time-travel', 'history', 'future', 'calendar', 'clocks'
+  'time',
+  
+  // Work and Business
+  'work',
+  
+  // Education
+  'school',
+  
+  // Family
+  'family',
+  
+  // Holidays and Events
+  'holiday',
+  
+  // Transportation
+  'transportation'
 ] as const;
 
 type Category = typeof CATEGORIES[number];
