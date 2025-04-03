@@ -1,10 +1,10 @@
-interface Joke {
+export interface Joke {
   id: string;
   setup: string;
   punchline: string;
 }
 
-const jokes: Joke[] = [
+export const allJokes: Joke[] = [
   {
     id: "1",
     setup: "Why don't programmers like nature?",
@@ -287,4 +287,4 @@ const jokes: Joke[] = [
   }
 ];
 
-module.exports = { jokes };
+module.exports = { jokes: allJokes };

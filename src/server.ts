@@ -1,6 +1,9 @@
 /// <reference types="express" />
 /// <reference types="cors" />
 
+import type { Request, Response } from 'express';
+import type { Joke } from './jokes';
+
 const express = require('express');
 const cors = require('cors');
 const { jokes } = require('./jokes');
@@ -9,13 +12,13 @@ const app = express();
 app.use(cors());
 
 // Categorize jokes based on keywords
-const categorizedJokes = new Map<string, typeof jokes>();
+const categorizedJokes = new Map<string, Joke[]>();
 
 // Track recently used jokes per category
 const recentlyUsedJokes = new Map<string, Set<string>>();
 
 // Helper function to categorize a joke
-function categorizeJoke(joke: typeof jokes[0]) {
+function categorizeJoke(joke: Joke) {
   const text = (joke.setup + ' ' + joke.punchline).toLowerCase();
   
   const categories = {
@@ -47,10 +50,17 @@ function categorizeJoke(joke: typeof jokes[0]) {
 }
 
 // Categorize all jokes on startup
+console.log(`Loaded ${jokes.length} total jokes`);
 jokes.forEach(categorizeJoke);
 
 // Add all jokes to a general category
 categorizedJokes.set('general', jokes);
+
+// Log category statistics
+console.log('Joke categories:');
+for (const [category, jokes] of categorizedJokes.entries()) {
+  console.log(`- ${category}: ${jokes.length} jokes`);
+}
 
 // Helper function to get a weighted random index
 function getWeightedRandomIndex(length: number, temperature: number): number {
@@ -75,7 +85,7 @@ function getWeightedRandomIndex(length: number, temperature: number): number {
 }
 
 // API endpoint to get a random joke
-app.get('/api/generate-joke', (req: any, res: any) => {
+app.get('/api/generate-joke', (req: Request, res: Response) => {
   const category = (req.query.category as string)?.toLowerCase() || 'general';
   const temperature = parseFloat(req.query.temperature as string) || 0.7;
   
@@ -114,7 +124,7 @@ app.get('/api/generate-joke', (req: any, res: any) => {
 });
 
 // Health check endpoint
-app.get('/api/health', (_: any, res: any) => {
+app.get('/api/health', (_: Request, res: Response) => {
   res.json({ 
     status: 'ok',
     version: '1.0.0',
